@@ -1,0 +1,61 @@
+{
+  "market": "Switzerland/DACH",
+  "category": "outdoor retail",
+  "themes": [
+    {
+      "theme": "weather-adaptive alpine gear",
+      "keywords": [
+        "packable rain shell",
+        "ultralight hardshell",
+        "stormproof hiking jacket",
+        "weather adaptive layering",
+        "alpine commuter jacket"
+      ],
+      "why_it_might_matter": "Swiss outdoor customers face increasingly variable weather and may need lighter, more flexible protection."
+    },
+    {
+      "theme": "trail-to-city crossover",
+      "keywords": [
+        "gorpcore commuter backpack",
+        "trail running vest everyday",
+        "approach shoes city hiking",
+        "outdoor commute gear",
+        "technical fleece everyday"
+      ],
+      "why_it_might_matter": "Outdoor gear is increasingly worn across work, travel, and weekend use cases."
+    },
+    {
+      "theme": "circular outdoor retail",
+      "keywords": [
+        "outdoor gear repair service",
+        "hiking gear rental",
+        "second hand outdoor equipment",
+        "used hiking boots resale",
+        "repairable outdoor clothing"
+      ],
+      "why_it_might_matter": "Repair, rental, and resale models can create loyalty and new revenue without relying only on new product drops."
+    },
+    {
+      "theme": "women-specific outdoor needs",
+      "keywords": [
+        "women hiking safety gear",
+        "women specific hiking backpack",
+        "female fit outdoor jacket",
+        "women trail running community",
+        "outdoor gear for women fit"
+      ],
+      "why_it_might_matter": "Fit, safety, comfort, and community signals can reveal underserved segments."
+    },
+    {
+      "theme": "compact weekend adventure",
+      "keywords": [
+        "microadventure gear",
+        "weekend hiking kit",
+        "compact camping gear",
+        "lightweight travel hiking",
+        "one bag outdoor weekend"
+      ],
+      "why_it_might_matter": "City-based customers may want compact gear for short, frequent trips rather than expedition-level equipment."
+    }
+  ]
+}

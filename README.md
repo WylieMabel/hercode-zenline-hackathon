@@ -12,6 +12,17 @@ Use the starter case of a Swiss outdoor retailer to prove that the system works,
 
 The best submissions are not one-off research reports. They show a repeatable flow where inputs can change and the method still works.
 
+## How This Connects To Scandit
+
+This challenge is the B2B side of the shared outdoor-retail story.
+
+- **Zenline challenge:** help the retailer decide what emerging products, services, assortment gaps, or retail opportunities are worth stocking, testing, or monitoring.
+- **Scandit challenge:** help the shopper find, compare, and buy the right product in-store through scanning, AR, and AI assistance.
+
+Together, the two tracks cover the retail loop: market signals become assortment decisions, and assortment decisions become a better in-store customer experience.
+
+Companion B2C challenge: [`raffaelefarinaro/hercode-scandit-challenge`](https://github.com/raffaelefarinaro/hercode-scandit-challenge).
+
 ## Starter Case
 
 Detect promising emerging outdoor retail opportunities for Switzerland or DACH. Think beyond "new product list": your system could uncover a new activity, product format, material, rental model, merchandising idea, local assortment gap, brand partnership, or community trend.
@@ -49,6 +60,16 @@ Teams should have 2-4 people. Discord is the main communication channel before a
 
 Intro session deck: [`slides/hercode-zenline-hackathon-intro.pptx`](slides/hercode-zenline-hackathon-intro.pptx).
 
+## What's In This Repo
+
+- [`SUBMISSION.md`](SUBMISSION.md): fill this in before submitting your fork.
+- [`docs/challenge.md`](docs/challenge.md): deeper challenge brief and quality bar.
+- [`docs/data-contract.md`](docs/data-contract.md): suggested structured fields for signals and recommendations.
+- [`docs/evaluation.md`](docs/evaluation.md): judging rubric.
+- [`starter-pack/`](starter-pack/): seed keywords, source ideas, competitor retailers, and example opportunity outputs.
+- [`examples/signals.csv`](examples/signals.csv): minimal example signal-row shape.
+- [`slides/hercode-zenline-hackathon-intro.pptx`](slides/hercode-zenline-hackathon-intro.pptx): intro-session slide deck.
+
 ## Required Deliverables
 
 Submit a fork of this repository that contains:
@@ -85,7 +106,11 @@ You can build any useful part of the opportunity-detection system. Pick the part
 - Evidence deduplication, source credibility, or opportunity-scoring tools.
 - Report generators that convert structured evidence into a business-ready recommendation.
 
+Pick one direction and make it work well. One useful capability that runs live is better than four half-finished ideas.
+
 A strong demo does not need to replace the whole flow. Improving one source, analysis step, scoring module, API, UI, or handoff artifact can be enough if the result is reusable and well demonstrated.
+
+Use the [`starter-pack/`](starter-pack/) if you want a faster start, but feel free to replace it with your own sources and assumptions.
 
 ## Demo Target
 
@@ -97,6 +122,8 @@ By the end, the jury should be able to open your fork and understand:
 - Whether it can realistically work in Switzerland or DACH.
 - What the retailer should test next.
 - How your approach could run again for another category or market.
+
+For the final session, be ready to present a short live demo and answer questions. Keep the demo focused on what works: the jury can inspect technical depth from your fork, code, data, and artifacts.
 
 ## Suggested Evidence Sources
 

@@ -1,0 +1,38 @@
+[
+  {
+    "rank": 1,
+    "opportunity": "Weather-adaptive lightweight shell bundle",
+    "first_observed_market": "DACH / Nordics",
+    "evidence_summary": "Directional example: repeated interest in packable rain protection, fast weather shifts, and lightweight hiking layers.",
+    "evidence_urls": [],
+    "transferability": "Likely relevant for Swiss day hikes and commuter-to-trail use, especially around unpredictable alpine weather.",
+    "coverage_status": "unknown",
+    "recommended_action": "Validate demand with local search data, competitor assortment scan, and a small landing-page or campaign test.",
+    "confidence": "medium",
+    "risks": "Example row only. Needs real source URLs, price checks, and local assortment coverage."
+  },
+  {
+    "rank": 2,
+    "opportunity": "Repair and resale service for premium outdoor gear",
+    "first_observed_market": "UK / DACH",
+    "evidence_summary": "Directional example: circularity, repairability, and second-hand outdoor gear appear as recurring customer and brand themes.",
+    "evidence_urls": [],
+    "transferability": "Potentially strong in Switzerland where premium gear prices and sustainability expectations are high.",
+    "coverage_status": "unknown",
+    "recommended_action": "Map competitor services, estimate operational requirements, and test with one category such as jackets or backpacks.",
+    "confidence": "low",
+    "risks": "Needs operational feasibility, margin, and partner validation."
+  },
+  {
+    "rank": 3,
+    "opportunity": "Trail-to-city technical fleece and commuter layer",
+    "first_observed_market": "US / UK / Japan",
+    "evidence_summary": "Directional example: outdoor aesthetics crossing into daily commuter wear and travel gear.",
+    "evidence_urls": [],
+    "transferability": "Could fit Swiss city-based weekend adventurers if price, fit, and office-friendly design are right.",
+    "coverage_status": "unknown",
+    "recommended_action": "Scan social and retailer signals, then compare against local assortment gaps and price points.",
+    "confidence": "medium",
+    "risks": "May be fashion-led and short-lived; needs evidence separating durable demand from style noise."
+  }
+]
