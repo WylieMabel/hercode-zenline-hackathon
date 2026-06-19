@@ -160,13 +160,22 @@ def fetch_daylight(config: dict) -> list[dict]:
     try:
         url = (
             "https://api.open-meteo.com/v1/forecast"
-            f"?latitude={lat}&longitude={lon}&daily=sunrise,sunset,daylight_duration"
+            f"?latitude={lat}&longitude={lon}&daily=sunrise,sunset,sunshine_duration"
             f"&start_date={date.today().isoformat()}&end_date={end}&timezone=Europe%2FZurich"
         )
         resp = requests.get(url, timeout=REQUEST_TIMEOUT)
         resp.raise_for_status()
         daily = resp.json().get("daily", {})
-        durations = daily.get("daylight_duration") or []
+        # sunshine_duration is in seconds; fall back to computing from sunrise/sunset
+        durations = daily.get("sunshine_duration") or []
+        if not durations:
+            sunrises = daily.get("sunrise", [])
+            sunsets = daily.get("sunset", [])
+            durations = [
+                (int(ss.split("T")[1].split(":")[0]) * 3600 + int(ss.split("T")[1].split(":")[1]) * 60)
+                - (int(sr.split("T")[1].split(":")[0]) * 3600 + int(sr.split("T")[1].split(":")[1]) * 60)
+                for sr, ss in zip(sunrises, sunsets) if sr and ss
+            ]
         if durations:
             avg_hours = round(sum(durations) / len(durations) / 3600, 1)
             rows.append(make_row(

@@ -42,22 +42,29 @@ def _fetch_interest(keywords: list[str], geo: str, timeframe: str) -> dict[str, 
         with open(cache_key, encoding="utf-8") as f:
             return json.load(f)
 
-    try:
-        from pytrends.request import TrendReq
+    from pytrends.request import TrendReq
 
-        pytrends = TrendReq(hl="en-US", tz=0)
-        pytrends.build_payload(keywords, timeframe=timeframe, geo=geo)
-        df = pytrends.interest_over_time()
-        if df is None or df.empty:
+    for attempt in range(2):
+        try:
+            pytrends = TrendReq(hl="en-US", tz=0)
+            pytrends.build_payload(keywords, timeframe=timeframe, geo=geo)
+            df = pytrends.interest_over_time()
+            if df is None or df.empty:
+                return None
+            payload = {kw: df[kw].tolist() for kw in keywords if kw in df.columns}
+            with open(cache_key, "w", encoding="utf-8") as f:
+                json.dump(payload, f)
+            time.sleep(2.5)
+            return payload
+        except Exception as exc:
+            msg = str(exc)
+            if "429" in msg and attempt == 0:
+                print(f"  [trends] rate-limited geo={geo} window={timeframe}; retrying in 35s…")
+                time.sleep(35)
+                continue
+            print(f"  [trends] fetch failed geo={geo} window={timeframe} ({exc}).")
             return None
-        payload = {kw: df[kw].tolist() for kw in keywords if kw in df.columns}
-        with open(cache_key, "w", encoding="utf-8") as f:
-            json.dump(payload, f)
-        time.sleep(1.5)
-        return payload
-    except Exception as exc:
-        print(f"  [trends] fetch failed geo={geo} window={timeframe} ({exc}).")
-        return None
+    return None
 
 
 def _market_label(geo: str) -> str:

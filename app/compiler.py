@@ -23,8 +23,8 @@ SCORED_SIGNALS_PATH = os.path.join(PROJECT_ROOT, "scored_opportunities.csv")
 RECOMMENDATIONS_PATH = os.path.join(PROJECT_ROOT, "ranked_recommendations.csv")
 
 RECOMMENDATION_COLUMNS = [
-    "rank", "opportunity", "opportunity_type", "first_observed_market", "evidence_summary",
-    "evidence_urls", "transferability", "coverage_status",
+    "rank", "signal_score", "opportunity", "opportunity_type", "first_observed_market",
+    "evidence_summary", "evidence_urls", "transferability", "coverage_status",
     "recommended_action", "confidence", "risks",
     "products", "features", "materials", "aesthetics", "color_palettes",
     "recommended_workflow", "competitor_gap",
@@ -65,7 +65,7 @@ Competitor assortment gaps (brands/categories at rivals but not client):
 
 {sales_block}
 
-Identify the top 4–5 distinct business opportunities for a Swiss/DACH outdoor retailer.
+Identify the top 8–10 distinct business opportunities for a Swiss/DACH outdoor retailer.
 Cover MULTIPLE opportunity types — not only products. Include at least:
   - 1 material or technology opportunity
   - 1 aesthetic or colour_palette opportunity
@@ -103,12 +103,29 @@ def _parse_opportunities_json(raw: str) -> list[dict]:
     return json.loads(match.group(0))
 
 
+def _attach_signal_scores(opportunities: list[dict], signals: list[dict]) -> None:
+    """For each opportunity, find the highest-scoring signal whose name overlaps, attach as signal_score."""
+    for opp in opportunities:
+        if "signal_score" in opp:
+            continue
+        opp_text = (opp.get("opportunity", "") + " " + opp.get("description", "")).lower()
+        opp_words = set(w for w in re.split(r"\W+", opp_text) if len(w) > 3)
+        best = 0.0
+        for s in signals:
+            sig_text = s.get("signal_name", "").lower()
+            sig_words = set(w for w in re.split(r"\W+", sig_text) if len(w) > 3)
+            if opp_words & sig_words:
+                best = max(best, float(s.get("signal_score", 0)))
+        opp["signal_score"] = round(best, 4) if best else 0.30
+
+
 def _finalize_opportunities(
     opportunities: list[dict],
     valid_urls: set[str],
     gap_hints: dict,
     insights: dict,
     category_volume: dict[str, int],
+    signals: list[dict] | None = None,
 ) -> list[dict]:
     for opp in opportunities:
         cited = opp.get("evidence_urls", []) or []
@@ -121,6 +138,11 @@ def _finalize_opportunities(
             opp.setdefault(key, insights.get(key, [])[:3])
         combined = opp.get("opportunity", "") + " " + opp.get("description", "")
         opp["coverage_status"] = _compute_coverage_status(combined, category_volume)
+    if signals:
+        _attach_signal_scores(opportunities, signals)
+    opportunities.sort(key=lambda o: float(o.get("signal_score", 0)), reverse=True)
+    for i, opp in enumerate(opportunities, 1):
+        opp["rank"] = i
     return opportunities
 
 
@@ -206,19 +228,21 @@ def _rule_based_opportunities(
     gap_summary = gap_hints.get("summary", "No gap analysis available.")
     top_signals = sorted(signals, key=lambda x: float(x.get("signal_score", 0)), reverse=True)
 
-    if top_signals:
-        s = top_signals[0]
+    # Top product signals — take up to 3
+    for s in top_signals[:3]:
         workflow = _extract_workflow(s.get("notes", ""))
         name = s.get("signal_name", "Opportunity")
         if len(name) > 80:
             name = name[:77] + "..."
+        score = float(s.get("signal_score", 0.3))
         opps.append({
             "rank": rank,
+            "signal_score": score,
             "opportunity": name,
             "opportunity_type": "product_type",
             "description": (
                 f"Top product signal from {s.get('source')} ({s.get('market')}), "
-                f"score {s.get('signal_score')}."
+                f"score {score:.2f}."
             ),
             "evidence": [f"{s.get('source')}: {s.get('signal_name')}"],
             "first_observed_market": s.get("market", "N/A"),
@@ -238,45 +262,73 @@ def _rule_based_opportunities(
         })
         rank += 1
 
-    for mat in insights.get("materials", [])[:1]:
+    for mat in insights.get("materials", [])[:3]:
         opps.append(_facet_opportunity(
             rank, "material", f"Material watch: {mat}",
             f"'{mat}' appears across social and publication signals — monitor for niche-to-mainstream shift.",
             insights, gap_hints, workflow="monitor", confidence="medium",
             evidence=[f"Trend facet: material '{mat}'"],
         ))
+        opps[-1]["signal_score"] = 0.55
         rank += 1
 
-    palettes = insights.get("color_palettes") or insights.get("aesthetics", [])
-    if palettes:
-        p = palettes[0]
+    palettes = insights.get("color_palettes") or []
+    for p in palettes[:2]:
         opps.append(_facet_opportunity(
             rank, "color_palette", f"Colour direction: {p}",
-            f"Palette/aesthetic '{p}' gaining visibility — consider merchandising and buy aligned to this vibe.",
+            f"Palette '{p}' gaining visibility — align merchandising and buy to this direction.",
             insights, gap_hints, workflow="test", confidence="medium",
-            evidence=[f"Trend facet: colour/aesthetic '{p}'"],
+            evidence=[f"Trend facet: colour '{p}'"],
         ))
+        opps[-1]["signal_score"] = 0.50
         rank += 1
 
-    for brand in gap_hints.get("gap_brands", [])[:1]:
+    for aes in (insights.get("aesthetics") or [])[:2]:
+        opps.append(_facet_opportunity(
+            rank, "aesthetic", f"Aesthetic signal: {aes}",
+            f"Vibe '{aes}' surfacing across social channels — relevant for content and assortment curation.",
+            insights, gap_hints, workflow="monitor", confidence="medium",
+            evidence=[f"Trend facet: aesthetic '{aes}'"],
+        ))
+        opps[-1]["signal_score"] = 0.48
+        rank += 1
+
+    for brand in gap_hints.get("gap_brands", [])[:3]:
         opps.append(_facet_opportunity(
             rank, "brand", f"Scout brand: {brand.title()}",
-            f"Brand '{brand}' listed at multiple competitors but absent from client scrape.",
+            f"Brand '{brand}' listed at multiple competitors but absent from client assortment.",
             insights, gap_hints, workflow="test", confidence="medium",
             evidence=[f"Competitor gap: brand '{brand}'"],
         ))
+        opps[-1]["signal_score"] = 0.60
         rank += 1
 
-    for feat in insights.get("features", [])[:1]:
+    for cat in gap_hints.get("gap_categories", [])[:2]:
+        opps.append(_facet_opportunity(
+            rank, "price_gap", f"Category gap: {cat}",
+            f"Category '{cat}' present at competitors but under-represented in client assortment.",
+            insights, gap_hints, workflow="test", confidence="medium",
+            evidence=[f"Competitor gap: category '{cat}'"],
+        ))
+        opps[-1]["signal_score"] = 0.58
+        rank += 1
+
+    for feat in insights.get("features", [])[:3]:
         opps.append(_facet_opportunity(
             rank, "feature", f"Feature trend: {feat}",
-            f"Technical/feature signal '{feat}' — evaluate supplier options and margin impact.",
+            f"Technical feature '{feat}' — evaluate supplier options and margin impact.",
             insights, gap_hints, workflow="monitor", confidence="low",
             evidence=[f"Trend facet: feature '{feat}'"],
         ))
+        opps[-1]["signal_score"] = 0.42
         rank += 1
 
-    return opps[:5] or _placeholders()
+    # Sort by signal_score descending and re-number rank
+    opps.sort(key=lambda o: float(o.get("signal_score", 0)), reverse=True)
+    for i, o in enumerate(opps, 1):
+        o["rank"] = i
+
+    return opps or _placeholders()
 
 
 def compile_opportunities(
@@ -331,7 +383,7 @@ def compile_opportunities(
         if not raw:
             return fallback
         opportunities = _parse_opportunities_json(raw)
-        return _finalize_opportunities(opportunities, valid_urls, gap_hints, insights, category_volume)
+        return _finalize_opportunities(opportunities, valid_urls, gap_hints, insights, category_volume, signals=top_signals)
     except (json.JSONDecodeError, ValueError, TypeError) as exc:
         print(f"  [compiler] LLM JSON parse failed ({exc}); using rule-based fallback.")
         for opp in fallback:
@@ -370,6 +422,7 @@ def write_recommendations_csv(opportunities: list[dict], path: str = RECOMMENDAT
         evidence_bullets = "; ".join(opp.get("evidence", []) or [])
         rows.append({
             "rank": opp.get("rank", ""),
+            "signal_score": round(float(opp.get("signal_score", 0)), 4) if opp.get("signal_score") is not None else "",
             "opportunity": opp.get("opportunity", ""),
             "opportunity_type": opp.get("opportunity_type", "product_type"),
             "first_observed_market": opp.get("first_observed_market", "N/A"),

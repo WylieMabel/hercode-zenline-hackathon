@@ -1,0 +1,11 @@
+source,market,keyword,signal_name,signal_type,product_name,brand,price,rank,url,observed_at
+google_trends,global,backpack,Search interest for 'backpack' — global,search,N/A,N/A,N/A,13.0,https://trends.google.com/trends/explore?q=backpack&geo=,2026-06-19T13:16:11Z
+google_trends,CH,backpack,Search interest for 'backpack' — CH,search,N/A,N/A,N/A,2.5,https://trends.google.com/trends/explore?q=backpack&geo=CH,2026-06-19T13:16:21Z
+google_trends,global,apparel,Search interest for 'apparel' — global,search,N/A,N/A,N/A,17.0,https://trends.google.com/trends/explore?q=apparel&geo=,2026-06-19T13:16:30Z
+google_trends,CH,apparel,Search interest for 'apparel' — CH,search,N/A,N/A,N/A,-19.2,https://trends.google.com/trends/explore?q=apparel&geo=CH,2026-06-19T13:16:39Z
+google_trends,CH,gorpcore,Search interest for 'gorpcore' — CH,search,N/A,N/A,N/A,6.0,https://trends.google.com/trends/explore?q=gorpcore&geo=CH,2026-06-19T13:17:57Z
+google_trends,global,fastpacking,Search interest for 'fastpacking' — global,search,N/A,N/A,N/A,10.5,https://trends.google.com/trends/explore?q=fastpacking&geo=,2026-06-19T13:18:06Z
+google_trends,global,trail running packs,Search interest for 'trail running packs' — global,search,N/A,N/A,N/A,28.8,https://trends.google.com/trends/explore?q=trail running packs&geo=,2026-06-19T13:19:23Z
+google_trends,global,ultralight hiking,Search interest for 'ultralight hiking' — global,search,N/A,N/A,N/A,24.0,https://trends.google.com/trends/explore?q=ultralight hiking&geo=,2026-06-19T13:19:33Z
+google_trends,global,running,Search interest for 'running' — global,search,N/A,N/A,N/A,19.2,https://trends.google.com/trends/explore?q=running&geo=,2026-06-19T13:21:57Z
+google_trends,CH,running,Search interest for 'running' — CH,search,N/A,N/A,N/A,11.5,https://trends.google.com/trends/explore?q=running&geo=CH,2026-06-19T13:22:06Z
