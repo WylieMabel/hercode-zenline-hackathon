@@ -58,6 +58,98 @@ TYPE_LABELS = {
 }
 
 
+def _split_field(val) -> list[str]:
+    if not val:
+        return []
+    if isinstance(val, list):
+        return [str(v).strip() for v in val if str(v).strip()]
+    return [v.strip() for v in str(val).split(";") if v.strip()]
+
+
+def _parse_why_and_evidence(opp: dict) -> tuple[str, list[str]]:
+    """Split rationale (why) from evidence bullets, including CSV round-trips."""
+    why = (opp.get("description") or "").strip()
+    evidence = _split_field(opp.get("evidence"))
+
+    summary = (opp.get("evidence_summary") or "").strip()
+    if summary:
+        if " Evidence: " in summary:
+            head, _, tail = summary.partition(" Evidence: ")
+            if not why:
+                why = head.strip()
+            if not evidence:
+                evidence = [e.strip() for e in tail.split(";") if e.strip()]
+        elif not why:
+            why = summary
+
+    return why, evidence
+
+
+def _render_opportunity_card(opp: dict, *, expanded_details: bool = False) -> None:
+    rank = opp.get("rank", "?")
+    name = opp.get("opportunity", "Unknown")
+    conf = opp.get("confidence", "low")
+    workflow = opp.get("recommended_workflow", "monitor")
+    opp_type = opp.get("opportunity_type", "product_type")
+    badge = CONFIDENCE_BADGE.get(conf, conf)
+    wf = WORKFLOW_BADGE.get(workflow, workflow)
+    type_label = TYPE_LABELS.get(opp_type, opp_type)
+
+    why, evidence = _parse_why_and_evidence(opp)
+    urls = [u for u in _split_field(opp.get("evidence_urls")) if u != "N/A"]
+
+    with st.container(border=True):
+        st.markdown(f"## #{rank} · {name}")
+        st.caption(f"{type_label} · {badge} · {wf}")
+
+        if why:
+            st.markdown("**Why**")
+            st.markdown(why)
+
+        if evidence or urls:
+            st.markdown("**Evidence**")
+            for bullet in evidence:
+                st.markdown(f"- {bullet}")
+            for url in urls:
+                st.markdown(f"- [{url}]({url})")
+
+        with st.expander("Details", expanded=expanded_details):
+            action = opp.get("action") or opp.get("recommended_action", "")
+            if action:
+                st.markdown("**Recommended action**")
+                st.info(action)
+
+            meta_cols = st.columns(2)
+            with meta_cols[0]:
+                st.markdown(f"**Confidence:** {badge}")
+                st.markdown(f"**Workflow:** {wf}")
+                st.markdown(f"**First market:** {opp.get('first_observed_market', 'N/A')}")
+            with meta_cols[1]:
+                st.markdown(f"**Coverage:** {opp.get('coverage_status', 'unknown')}")
+                transfer = opp.get("transferability", "")
+                if transfer:
+                    st.markdown(f"**DACH transferability:** {transfer}")
+
+            for label, key in (
+                ("Products", "products"),
+                ("Features", "features"),
+                ("Materials", "materials"),
+                ("Aesthetics", "aesthetics"),
+                ("Colour palettes", "color_palettes"),
+            ):
+                val = _split_field(opp.get(key))
+                if val:
+                    st.markdown(f"**{label}:** {', '.join(val)}")
+
+            gap = opp.get("competitor_gap", "")
+            if gap:
+                st.markdown(f"**Competitor gap:** {gap}")
+
+            risks = opp.get("risks", "")
+            if risks:
+                st.markdown(f"**Risks:** {risks}")
+
+
 st.title("⛰️ Zenline Opportunity Scout")
 st.caption("Six-step pipeline: competitors → trends → regional → scoring → recommendations")
 
@@ -141,12 +233,13 @@ with tab_pipeline:
                 else:
                     s2.update(label="Steps 2–4: Collection error", state="error")
 
-            with st.status("Step 2b: Extracting trend facets...", expanded=True) as s2b:
+            with st.status("Step 2b: Extracting trend facets...", expanded=False) as s2b:
                 ok, msg, insights = pipeline_runner.run_trend_extraction(config, api_key=api_key)
                 st.write(msg)
                 st.session_state.insights = insights
                 if insights:
-                    st.json({k: insights.get(k, []) for k in ("trends", "features", "materials", "aesthetics")})
+                    with st.expander("Trend facets (debug)"):
+                        st.json({k: insights.get(k, []) for k in ("trends", "features", "materials", "aesthetics")})
                 s2b.update(label="Step 2b: Trend facets extracted ✓", state="complete")
 
             with st.status("Step 5: Scoring signals...", expanded=True) as s3:
@@ -186,63 +279,14 @@ with tab_opps:
     if not opps:
         st.info("No opportunities yet. Run the pipeline on the **Pipeline** tab.")
     else:
-        st.subheader(f"Ranked Opportunities ({len(opps)} found)")
-        for opp in sorted(opps, key=lambda x: int(x.get("rank", 99) or 99)):
-            rank = opp.get("rank", "?")
-            name = opp.get("opportunity", "Unknown")
-            conf = opp.get("confidence", "low")
-            workflow = opp.get("recommended_workflow", "monitor")
-            opp_type = opp.get("opportunity_type", "product_type")
-            badge = CONFIDENCE_BADGE.get(conf, conf)
-            wf = WORKFLOW_BADGE.get(workflow, workflow)
-            type_label = TYPE_LABELS.get(opp_type, opp_type)
+        sorted_opps = sorted(opps, key=lambda x: int(x.get("rank", 99) or 99))
+        high_conf = sum(1 for o in sorted_opps if o.get("confidence") == "high")
 
-            with st.expander(
-                f"#{rank}  {name}  ·  {type_label}  ·  {badge}  ·  {wf}",
-                expanded=(str(rank) == "1"),
-            ):
-                left, right = st.columns([2, 1])
-                with left:
-                    desc = opp.get("description") or opp.get("evidence_summary", "")
-                    st.markdown(f"**{desc}**")
+        st.subheader("Opportunities")
+        st.caption(
+            f"{len(sorted_opps)} trends ranked · {high_conf} high-confidence · "
+            "Each card shows **trend**, **why**, and **evidence**; expand **Details** for actions and metadata."
+        )
 
-                    evidence = opp.get("evidence") or []
-                    if evidence:
-                        st.markdown("**Evidence**")
-                        for e in evidence:
-                            st.markdown(f"- {e}")
-
-                    urls = opp.get("evidence_urls") or []
-                    if isinstance(urls, str) and urls:
-                        urls = [u.strip() for u in urls.split(";")]
-                    if urls:
-                        st.markdown("**Sources**")
-                        for u in urls:
-                            if u and u != "N/A":
-                                st.markdown(f"- [{u}]({u})")
-
-                    for label, key in (
-                        ("Products", "products"), ("Features", "features"),
-                        ("Materials", "materials"), ("Aesthetics", "aesthetics"),
-                        ("Colour palettes", "color_palettes"),
-                    ):
-                        val = opp.get(key, [])
-                        if isinstance(val, str) and val:
-                            val = [v.strip() for v in val.split(";") if v.strip()]
-                        if val:
-                            st.markdown(f"**{label}:** {', '.join(val)}")
-
-                    gap = opp.get("competitor_gap", "")
-                    if gap:
-                        st.markdown(f"**Competitor gap:** {gap}")
-                    st.markdown(f"**DACH transferability:** {opp.get('transferability', '')}")
-                    st.markdown(f"**Risks:** {opp.get('risks', '')}")
-                with right:
-                    st.markdown(f"**Confidence:** {badge}")
-                    st.markdown(f"**Workflow:** {wf}")
-                    st.markdown(f"**First market:** {opp.get('first_observed_market', 'N/A')}")
-                    st.markdown(f"**Coverage:** {opp.get('coverage_status', 'unknown')}")
-                    st.divider()
-                    action = opp.get("action") or opp.get("recommended_action", "")
-                    st.markdown("**Recommended action**")
-                    st.info(action)
+        for i, opp in enumerate(sorted_opps):
+            _render_opportunity_card(opp, expanded_details=(i == 0))
