@@ -28,10 +28,10 @@ def main():
     args = parser.parse_args()
 
     if args.mode == "retail":
-        from retail_assistant import run
+        from archive.chatbot.retail_assistant import run
         run()
     elif args.mode == "customer":
-        from customer_persona import run, list_personas
+        from archive.chatbot.customer_persona import run, list_personas
         if args.persona == "list":
             list_personas()
         else:

@@ -1,4 +1,4 @@
-from shared import claude_client
+from archive.chatbot.shared import claude_client
 
 # Personas representing key segments of the Swiss outdoor retail demographic.
 # Add or edit these to test different customer types.

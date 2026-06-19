@@ -11,6 +11,13 @@ import os
 from collections import defaultdict
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _safe_float(val) -> float:
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return 0.0
 RAW_SIGNALS_PATH = os.path.join(PROJECT_ROOT, "raw_signals.csv")
 SCORED_PATH = os.path.join(PROJECT_ROOT, "scored_opportunities.csv")
 
@@ -51,8 +58,17 @@ def score_signals(
         type_score = min(len(types) / 3.0, 1.0)
         swiss_bonus = 0.15 if any(m in ("CH", "DE/CH") for m in markets) else 0.0
 
+        # Boost clusters where another market demonstrably leads Switzerland —
+        # early-signal evidence raises the opportunity's priority.
+        leading_markets = [
+            r for r in cluster
+            if r.get("signal_type") == "search_geo"
+            and _safe_float(r.get("rank")) > 4
+        ]
+        lead_bonus = min(len(leading_markets) * 0.05, 0.15)
+
         raw = 0.5 * source_score + 0.3 * type_score + 0.2
-        cluster_scores[keyword] = round(min(raw + swiss_bonus, 1.0), 2)
+        cluster_scores[keyword] = round(min(raw + swiss_bonus + lead_bonus, 1.0), 2)
 
     # Write each row with its cluster score appended
     scored: list[dict] = []

@@ -18,7 +18,7 @@ import pandas as pd
 import streamlit as st
 
 import pipeline_runner
-from chatbot.shared import claude_client
+from archive.chatbot.shared import claude_client
 
 st.set_page_config(
     page_title="Zenline Opportunity Scout",
@@ -232,6 +232,10 @@ with tab_opps:
                         st.markdown("**Evidence**")
                         for e in evidence:
                             st.markdown(f"- {e}")
+
+                    lead_markets = opp.get("lead_markets") or []
+                    if lead_markets:
+                        st.markdown(f"**Lead markets:** {', '.join(lead_markets)} — trend appeared there before Switzerland")
 
                     st.markdown(f"**DACH Transferability:** {opp.get('transferability', '')}")
                     st.markdown(f"**Risks / gaps:** {opp.get('risks', '')}")

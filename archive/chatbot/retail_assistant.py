@@ -1,5 +1,5 @@
-from shared.signals_loader import load_signals, format_signals_for_prompt
-from shared import claude_client
+from archive.chatbot.shared.signals_loader import load_signals, format_signals_for_prompt
+from archive.chatbot.shared import claude_client
 
 SYSTEM_PROMPT_TEMPLATE = """\
 You are a retail intelligence analyst for a Swiss outdoor retailer operating in the DACH market.

@@ -261,6 +261,146 @@ def fetch_reddit_signals() -> list[dict]:
     return rows
 
 
+# Countries to compare against Switzerland for lead/lag analysis.
+# Ordered roughly by expected relevance to Swiss outdoor retail.
+MARKET_COMPARISON_GEOS: dict[str, str] = {
+    "JP": "Japan",
+    "US": "United States",
+    "NO": "Norway",
+    "SE": "Sweden",
+    "FR": "France",
+    "IT": "Italy",
+    "DE": "Germany",
+    "AT": "Austria",
+    "GB": "United Kingdom",
+    "CH": "Switzerland",
+}
+
+# Realistic fallback lead-weeks based on known outdoor trend diffusion patterns:
+# gorpcore originated in Japan streetwear, then US, then Europe.
+# Trail running / fastpacking is US/Nordic-led before reaching DACH.
+_MARKET_COMPARISON_FALLBACK: dict[str, dict[str, int]] = {
+    "gorpcore": {
+        "JP": 26, "US": 14, "GB": 8, "DE": 6, "FR": 5,
+        "NO": 4, "SE": 4, "IT": 3, "AT": 2,
+    },
+    "trail running packs": {
+        "US": 10, "FR": 7, "IT": 6, "NO": 5, "SE": 5,
+        "DE": 4, "GB": 3, "AT": 2, "JP": 2,
+    },
+    "fastpacking": {
+        "US": 16, "NO": 9, "SE": 7, "GB": 5, "FR": 5,
+        "DE": 4, "IT": 3, "AT": 2, "JP": 2,
+    },
+}
+
+
+def _trend_onset_index(series: "pd.Series", threshold_pct: float = 0.25) -> int | None:  # type: ignore[name-defined]
+    """Return the positional index of the first week where interest >= threshold_pct * peak."""
+    peak = series.max()
+    if peak == 0:
+        return None
+    threshold = peak * threshold_pct
+    for i, val in enumerate(series):
+        if val >= threshold:
+            return i
+    return None
+
+
+def fetch_google_trends_market_comparison() -> list[dict]:
+    """For each keyword, compare trend onset timing across markets vs Switzerland.
+
+    Queries a 12-month weekly time series per (keyword, geo) pair and computes
+    how many weeks ahead of (or behind) Switzerland each market's trend begins.
+    Positive rank = that market leads CH; negative = it lags.
+    """
+    import time
+
+    keywords = list(CONFIG["keywords"].keys())
+    rows: list[dict] = []
+
+    try:
+        from pytrends.request import TrendReq
+        import pandas as pd
+
+        pytrends = TrendReq(hl="en-US", tz=0)
+        series_by_kw: dict[str, dict[str, "pd.Series"]] = {}
+
+        for kw in keywords:
+            series_by_kw[kw] = {}
+            for geo in MARKET_COMPARISON_GEOS:
+                try:
+                    pytrends.build_payload([kw], timeframe="today 12-m", geo=geo)
+                    df = pytrends.interest_over_time()
+                    if not df.empty and kw in df.columns:
+                        series_by_kw[kw][geo] = df[kw]
+                    time.sleep(1.2)  # pytrends rate-limits aggressively
+                except Exception:
+                    continue
+
+        any_found = False
+        for kw, geo_series in series_by_kw.items():
+            ch_series = geo_series.get("CH")
+            if ch_series is None:
+                continue
+            ch_onset = _trend_onset_index(ch_series)
+            if ch_onset is None:
+                continue
+
+            for geo, series in geo_series.items():
+                if geo == "CH":
+                    continue
+                onset = _trend_onset_index(series)
+                if onset is None:
+                    continue
+                lead_weeks = ch_onset - onset
+                country_name = MARKET_COMPARISON_GEOS[geo]
+                if lead_weeks > 2:
+                    direction = f"leads Switzerland by {lead_weeks} weeks"
+                elif lead_weeks < -2:
+                    direction = f"lags Switzerland by {abs(lead_weeks)} weeks"
+                else:
+                    direction = "moves in sync with Switzerland"
+                rows.append(make_row(
+                    source="google_trends_market_comparison",
+                    market=geo,
+                    keyword=kw,
+                    signal_name=f"'{kw}' in {country_name} {direction}",
+                    signal_type="search_geo",
+                    rank=lead_weeks,
+                    url=f"https://trends.google.com/trends/explore?q={kw}&geo={geo}",
+                ))
+                any_found = True
+
+        if not any_found:
+            raise ValueError("no usable geo comparison series")
+        print(f"  [google_trends_market_comparison] {len(rows)} geo comparison rows computed (live).")
+
+    except Exception as exc:
+        print(f"  [google_trends_market_comparison] live fetch failed ({exc}); using fallback mock values.")
+        for kw, leads in _MARKET_COMPARISON_FALLBACK.items():
+            if kw not in keywords:
+                continue
+            for geo, lead_weeks in leads.items():
+                country_name = MARKET_COMPARISON_GEOS.get(geo, geo)
+                direction = (
+                    f"leads Switzerland by {lead_weeks} weeks (mock)"
+                    if lead_weeks > 2
+                    else "moves in sync with Switzerland (mock)"
+                )
+                rows.append(make_row(
+                    source="google_trends_market_comparison_fallback_mock",
+                    market=geo,
+                    keyword=kw,
+                    signal_name=f"'{kw}' in {country_name} {direction}",
+                    signal_type="search_geo",
+                    rank=lead_weeks,
+                    url=f"https://trends.google.com/trends/explore?q={kw}&geo={geo}",
+                ))
+
+    return rows
+
+
 def fetch_google_trends_signals() -> list[dict]:
     """Use pytrends to grab normalized search interest velocity."""
     keywords = list(CONFIG["keywords"].keys())
@@ -861,6 +1001,7 @@ def main() -> None:
     all_rows += fetch_reddit_signals()
     all_rows += fetch_google_trends_signals()
     all_rows += fetch_google_trends_related_queries()
+    all_rows += fetch_google_trends_market_comparison()
     all_rows += fetch_publication_rss_signals()
     youtube_rows = fetch_youtube_signals()
     all_rows += youtube_rows
