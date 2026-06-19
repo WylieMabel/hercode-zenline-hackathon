@@ -1,39 +1,63 @@
 """
-Pipeline step orchestration.
+Pipeline step orchestration — six-step retail signal pipeline.
 
-Each function returns (success: bool, message: str, data: any).
-Called by streamlit_app.py inside st.status blocks.
+Steps:
+  1. Competitor discovery → competitor_products.csv
+  2. Config finalization + social signals
+  3. Regional data collection
+  4. Multi-geo Google Trends
+  5. Scoring
+  6. LLM compilation → ranked_recommendations.csv
 """
+
+from __future__ import annotations
 
 import json
 import os
-import subprocess
 import sys
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # app/
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import scoring as _scoring
 import compiler as _compiler
+import scoring as _scoring
+from competitors import COMPETITOR_PRODUCTS_PATH, GAP_HINTS_PATH, find_competitors
+from geo import resolve_region
+from pipeline_config import (
+    CONFIG_PATH,
+    base_config,
+    finalize_config,
+    load_config,
+    merge_scraper_keywords,
+    save_config,
+)
+from regional import collect_regional_signals
+from signal_collection import collect_social_signals
+from signals_common import dedupe_rows, write_signals_csv
+from trend_extraction import extract_trend_facets, load_trend_insights
+from trends import collect_trends
+
+RAW_SIGNALS_PATH = os.path.join(PROJECT_ROOT, "raw_signals.csv")
 
 CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "")
 MODEL = "claude-sonnet-4-6"
 
 CONFIG_PROMPT = """\
-You are configuring a retail signal detection pipeline for an outdoor retailer.
+You are configuring a retail signal detection pipeline.
 
 Inputs:
 - Company location: {location}
 - Market / category: {market}
+- Client company: {client_company}
 - Price range: {price_range}
 
-Return a JSON object with exactly these keys:
-  "keywords"          list of 4–6 specific search keywords to monitor (trend names, product types, etc.)
-  "markets"           list of markets to scan — always include CH and DACH
-  "signal_types"      list of signal types: social, search, competitor, weather, api
-  "price_filter_note" string describing the price filter, or "no filter"
-  "summary"           one sentence describing the search focus
+Return JSON with keys:
+  keywords (4-6 search terms), markets (include CH, DACH, US, JP),
+  hashtags (3-5), subreddits (2-4), aesthetic_lexicon (4-6),
+  materials_watchlist (4-6), features_watchlist (4-6),
+  competitors (5-8 retailer slugs e.g. bergfreunde, rei, decathlon),
+  summary (one sentence)
 
 Return ONLY valid JSON, no markdown.
 """
@@ -42,8 +66,10 @@ Return ONLY valid JSON, no markdown.
 def generate_config(
     location: str,
     market: str,
+    client_company: str = "",
     price_min=None,
     price_max=None,
+    time_horizon: str = "standard",
 ) -> dict:
     price_range = "no filter"
     if price_min or price_max:
@@ -51,74 +77,170 @@ def generate_config(
         hi = f"CHF {price_max}" if price_max else "any"
         price_range = f"{lo} – {hi}"
 
-    fallback = {
-        "keywords": ["gorpcore", "trail running packs", "fastpacking", "ultralight hiking", "alpine crossover"],
-        "markets": ["CH", "DACH", "US", "DE"],
-        "signal_types": ["social", "search", "competitor", "weather", "api"],
-        "price_filter_note": price_range,
-        "summary": f"Scanning {market} signals for {location} with price filter: {price_range}.",
-    }
+    region = resolve_region(location)
+    config = base_config(location, market, client_company, price_min, price_max, time_horizon)
+    config["geo_code"] = region["geo"]
+    config["competitors"] = ["bergfreunde", "rei", "black_diamond", "decathlon", "columbia"]
 
     if not CLAUDE_API_KEY:
-        return fallback
+        merge_scraper_keywords(config)
+        return config
 
     try:
         import anthropic
+
         client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
-        prompt = CONFIG_PROMPT.format(location=location, market=market, price_range=price_range)
+        prompt = CONFIG_PROMPT.format(
+            location=location,
+            market=market,
+            client_company=client_company or "none",
+            price_range=price_range,
+        )
         response = client.messages.create(
             model=MODEL,
-            max_tokens=512,
+            max_tokens=768,
             messages=[{"role": "user", "content": prompt}],
         )
         raw = response.content[0].text.strip()
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
-        return json.loads(raw)
+        llm_cfg = json.loads(raw)
+        for key in (
+            "keywords", "markets", "hashtags", "subreddits", "aesthetic_lexicon",
+            "materials_watchlist", "features_watchlist", "competitors", "summary",
+        ):
+            if key in llm_cfg:
+                config[key] = llm_cfg[key]
     except Exception:
-        return fallback
+        pass
+
+    merge_scraper_keywords(config)
+    return config
 
 
-def run_scraper() -> tuple[bool, str]:
-    script = os.path.join(PROJECT_ROOT, "scraper_pipeline.py")
-    if not os.path.exists(script):
-        return False, "scraper_pipeline.py not found in project root."
+def run_competitors(config: dict) -> tuple[bool, str, list[dict], dict]:
     try:
-        result = subprocess.run(
-            [sys.executable, script],
-            capture_output=True,
-            text=True,
-            timeout=180,
-            cwd=PROJECT_ROOT,
-        )
-        out = (result.stdout or "")[-1200:]
-        if result.returncode == 0:
-            return True, out or "Scraper completed."
-        err = (result.stderr or "")[-400:]
-        return False, f"Scraper exited with code {result.returncode}.\n{err}"
-    except subprocess.TimeoutExpired:
-        return False, "Scraper timed out after 180s."
+        products, hints = find_competitors(config)
+        titles = [p.get("product_name", "") for p in products if p.get("product_name")]
+        finalize_config(config, titles)
+        save_config(config)
+        return True, f"Found {len(products)} competitor products", products, hints
     except Exception as exc:
-        return False, str(exc)
+        return False, str(exc), [], {}
 
 
-def run_scoring() -> tuple[bool, str, list[dict]]:
-    raw_path = os.path.join(PROJECT_ROOT, "raw_signals.csv")
-    scored_path = os.path.join(PROJECT_ROOT, "scored_opportunities.csv")
-
-    if not os.path.exists(raw_path):
-        return False, "raw_signals.csv not found — run the scraper first.", []
-
+def run_signal_collection(config: dict) -> tuple[bool, str, int]:
     try:
-        rows = _scoring.score_signals(raw_path, scored_path)
+        all_rows: list[dict] = []
+        print("=== Social signals ===")
+        all_rows += collect_social_signals(config)
+        print("=== Regional signals ===")
+        all_rows += collect_regional_signals(config)
+        insights_kw = []
+        ti = load_trend_insights()
+        if ti:
+            insights_kw = ti.get("trends", [])
+        print("=== Google Trends ===")
+        all_rows += collect_trends(config, extra_keywords=insights_kw)
+
+        # Include competitor products in raw signals
+        if os.path.exists(COMPETITOR_PRODUCTS_PATH):
+            import csv
+            with open(COMPETITOR_PRODUCTS_PATH, newline="", encoding="utf-8") as f:
+                for row in csv.DictReader(f):
+                    all_rows.append({k: row.get(k, "") for k in row})
+
+        deduped = dedupe_rows(all_rows)
+        write_signals_csv(deduped, RAW_SIGNALS_PATH)
+        return True, f"Collected {len(deduped)} signals → raw_signals.csv", len(deduped)
+    except Exception as exc:
+        return False, str(exc), 0
+
+
+def run_trend_extraction(config: dict) -> tuple[bool, str, dict]:
+    try:
+        import csv
+        with open(RAW_SIGNALS_PATH, newline="", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+        insights = extract_trend_facets(rows, config)
+        return True, f"Extracted {sum(len(insights.get(k, [])) for k in ('trends','products','features'))} facet items", insights
+    except Exception as exc:
+        return False, str(exc), {}
+
+
+def run_scoring(gap_hints: dict | None = None, insights: dict | None = None) -> tuple[bool, str, list[dict]]:
+    if not os.path.exists(RAW_SIGNALS_PATH):
+        return False, "raw_signals.csv not found — run signal collection first.", []
+    try:
+        if gap_hints is None and os.path.exists(GAP_HINTS_PATH):
+            with open(GAP_HINTS_PATH, encoding="utf-8") as f:
+                gap_hints = json.load(f)
+        if insights is None:
+            insights = load_trend_insights()
+        rows = _scoring.score_signals(RAW_SIGNALS_PATH, gap_hints=gap_hints, insights=insights)
         return True, f"Scored {len(rows)} signals → scored_opportunities.csv", rows
     except Exception as exc:
         return False, str(exc), []
 
 
-def run_compiler(scored_rows: list[dict], sales_context: str = "") -> tuple[bool, str, list[dict]]:
+def run_compiler(
+    scored_rows: list[dict],
+    sales_context: str = "",
+    insights: dict | None = None,
+    gap_hints: dict | None = None,
+) -> tuple[bool, str, list[dict]]:
     try:
-        opps = _compiler.compile_opportunities(scored_rows, sales_context)
-        return True, f"Compiled {len(opps)} opportunities.", opps
+        if gap_hints is None and os.path.exists(GAP_HINTS_PATH):
+            with open(GAP_HINTS_PATH, encoding="utf-8") as f:
+                gap_hints = json.load(f)
+        if insights is None:
+            insights = load_trend_insights()
+        opps = _compiler.compile_opportunities(scored_rows, sales_context, insights, gap_hints)
+        _compiler.write_recommendations_csv(opps)
+        return True, f"Compiled {len(opps)} opportunities → ranked_recommendations.csv", opps
     except Exception as exc:
         return False, str(exc), []
+
+
+def run_pipeline(
+    location: str,
+    market: str,
+    client_company: str = "",
+    price_min=None,
+    price_max=None,
+    sales_context: str = "",
+    time_horizon: str = "standard",
+) -> dict:
+    """Run all six steps; return summary dict."""
+    config = generate_config(location, market, client_company, price_min, price_max, time_horizon)
+    save_config(config)
+
+    results: dict = {"config": config, "steps": {}}
+
+    ok, msg, products, hints = run_competitors(config)
+    results["steps"]["1_competitors"] = {"ok": ok, "message": msg, "count": len(products)}
+    results["gap_hints"] = hints
+
+    ok, msg, count = run_signal_collection(config)
+    results["steps"]["2_4_signals"] = {"ok": ok, "message": msg, "count": count}
+
+    ok, msg, insights = run_trend_extraction(config)
+    results["steps"]["2_facets"] = {"ok": ok, "message": msg}
+    results["insights"] = insights
+
+    ok, msg, scored = run_scoring(hints, insights)
+    results["steps"]["5_scoring"] = {"ok": ok, "message": msg, "count": len(scored)}
+
+    ok, msg, opps = run_compiler(scored, sales_context, insights, hints)
+    results["steps"]["6_compile"] = {"ok": ok, "message": msg, "count": len(opps)}
+    results["opportunities"] = opps
+    return results
+
+
+# Legacy wrappers for gradual migration
+def run_scraper(config_path: str = CONFIG_PATH) -> tuple[bool, str]:
+    if not os.path.exists(config_path):
+        return False, f"Config not found: {config_path}"
+    config = load_config(config_path)
+    ok, msg, _ = run_signal_collection(config)
+    return ok, msg

@@ -11,3 +11,7 @@ __pycache__/
 .DS_Store
 .ipynb_checkpoints/
 *.log
+cache/
+pipeline_config.json
+competitor_gap_hints.json
+trend_insights.json
