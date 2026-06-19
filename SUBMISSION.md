@@ -47,11 +47,13 @@ Describe the main output artifacts in this repository or linked from it.
 
 ## Ranked Opportunities
 
-| Rank | Opportunity | First observed market/source | Evidence | Transferability to CH/DACH | Recommended next action | Confidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 |  |  |  |  |  |  |
-| 2 |  |  |  |  |  |  |
-| 3 |  |  |  |  |  |  |
+Teams are free to decide what counts as evidence and how they want to score confidence. Be creative, as long as the result is understandable.
+
+| Rank | Opportunity | Evidence | Confidence |
+| --- | --- | --- | --- |
+| 1 |  |  |  |
+| 2 |  |  |  |
+| 3 |  |  |  |
 
 ## Evidence Trail
 
