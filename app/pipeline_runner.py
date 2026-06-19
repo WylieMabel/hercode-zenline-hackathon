@@ -37,6 +37,8 @@ from pipeline_config import (
 from vertical_presets import match_vertical
 from regional import collect_regional_signals
 from signal_collection import collect_social_signals
+from social_keywords import extract_trends_keywords_from_social
+from signals_bundled import GOOGLE_TRENDS_SIGNALS_PATH, SOCIAL_SIGNALS_PATH
 from signals_common import dedupe_rows, write_signals_csv
 from trend_extraction import extract_trend_facets, load_trend_insights
 from trends import collect_trends
@@ -137,24 +139,37 @@ def run_competitors(config: dict) -> tuple[bool, str, list[dict], dict]:
         titles = [p.get("product_name", "") for p in products if p.get("product_name")]
         finalize_config(config, titles)
         save_config(config)
-        return True, f"Found {len(products)} competitor products", products, hints
+        src = config.get("competitor_data_source", "bundled")
+        verb = "Loaded" if src == "bundled" else "Scraped"
+        return True, f"{verb} {len(products)} competitor products ({src})", products, hints
     except Exception as exc:
         return False, str(exc), [], {}
 
 
 def run_signal_collection(config: dict) -> tuple[bool, str, int]:
     try:
-        all_rows: list[dict] = []
         print("=== Social signals ===")
-        all_rows += collect_social_signals(config)
+        social_rows = collect_social_signals(config)
+        write_signals_csv(social_rows, SOCIAL_SIGNALS_PATH)
+
+        trends_keywords = extract_trends_keywords_from_social(social_rows, config)
+        config["trends_keywords_from_social"] = trends_keywords
+        print(
+            f"  [trends] {len(trends_keywords)} keywords from social → Google Trends "
+            f"(e.g. {', '.join(trends_keywords[:5])})"
+        )
+
         print("=== Regional signals ===")
-        all_rows += collect_regional_signals(config)
-        insights_kw = []
-        ti = load_trend_insights()
-        if ti:
-            insights_kw = ti.get("trends", [])
+        regional_rows = collect_regional_signals(config)
+
         print("=== Google Trends ===")
-        all_rows += collect_trends(config, extra_keywords=insights_kw)
+        trends_rows = collect_trends(config, extra_keywords=trends_keywords)
+        write_signals_csv(trends_rows, GOOGLE_TRENDS_SIGNALS_PATH)
+
+        all_rows: list[dict] = []
+        all_rows += social_rows
+        all_rows += regional_rows
+        all_rows += trends_rows
 
         # Include competitor products in raw signals
         if os.path.exists(COMPETITOR_PRODUCTS_PATH):
@@ -165,7 +180,11 @@ def run_signal_collection(config: dict) -> tuple[bool, str, int]:
 
         deduped = dedupe_rows(all_rows)
         write_signals_csv(deduped, RAW_SIGNALS_PATH)
-        return True, f"Collected {len(deduped)} signals → raw_signals.csv", len(deduped)
+        save_config(config)
+        return True, (
+            f"Collected {len(deduped)} signals "
+            f"(social={len(social_rows)}, trends={len(trends_rows)}) → raw_signals.csv"
+        ), len(deduped)
     except Exception as exc:
         return False, str(exc), 0
 

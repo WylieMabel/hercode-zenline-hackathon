@@ -8,6 +8,7 @@ from typing import Any
 import requests
 
 from geo import resolve_region
+from signals_bundled import REGIONAL_BUNDLED_PATH, load_bundled_rows, use_bundled_regional
 from signals_common import NA, make_row
 
 HEADERS = {"User-Agent": "zenline-trend-scout/0.1 (hackathon prototype)"}
@@ -265,6 +266,12 @@ def fetch_publication_rss(config: dict) -> list[dict]:
 
 
 def collect_regional_signals(config: dict) -> list[dict]:
+    if use_bundled_regional(config):
+        bundled = load_bundled_rows(REGIONAL_BUNDLED_PATH)
+        if bundled:
+            print(f"  [regional] loaded {len(bundled)} bundled rows.")
+            return bundled
+
     rows: list[dict] = []
     rows += fetch_temperature_anomaly(config)
     rows += fetch_uv_aqi(config)

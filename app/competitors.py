@@ -15,7 +15,30 @@ from pipeline_config import OUTDOOR_SCRAPER_PRESET, PROJECT_ROOT
 from signals_common import NA, infer_product_category, make_row, now_iso
 
 COMPETITOR_PRODUCTS_PATH = os.path.join(PROJECT_ROOT, "competitor_products.csv")
+BUNDLED_COMPETITOR_PRODUCTS_PATH = os.path.join(PROJECT_ROOT, "competitors", "competitor_products.csv")
 GAP_HINTS_PATH = os.path.join(PROJECT_ROOT, "competitor_gap_hints.json")
+
+DECATHLON_HOUSE_BRANDS = {
+    "quechua", "simond", "kiprun", "wedze", "forclaz", "tribord",
+    "oxelo", "kalenji", "domyos", "decathlon",
+}
+
+BUNDLE_TYPE_TO_KEYWORD = {
+    "Apparel": "apparel",
+    "Footwear": "footwear",
+    "Bags & Packs": "backpack",
+    "Camping": "camping",
+    "Climbing": "climbing",
+    "Accessories": "accessories",
+    "Equipment": "accessories",
+    "Snow": "ski",
+    "Cycling": "accessories",
+    "Compression": "apparel",
+    "Electronics": "accessories",
+    "Nutrition": "accessories",
+    "Safety": "accessories",
+    "Other": "general",
+}
 
 HEADERS = {"User-Agent": "zenline-trend-scout/0.1 (hackathon prototype)"}
 REQUEST_TIMEOUT = 10
@@ -96,11 +119,147 @@ RETAILER_LABELS = {k: k.replace("_", " ").title() for k in RETAILER_REGISTRY}
 COMPETITOR_COLUMNS = [
     "source", "market", "keyword", "signal_name", "signal_type",
     "product_name", "brand", "price", "rank", "url", "observed_at", "is_client",
+    "material", "feature", "product_type", "product_subtype", "competitor_name",
 ]
 
 
 def list_registry_slugs() -> list[str]:
     return sorted(RETAILER_REGISTRY.keys())
+
+
+def list_bundled_retailers(path: str = BUNDLED_COMPETITOR_PRODUCTS_PATH) -> list[str]:
+    """Unique retailer names from the offline competitor catalog."""
+    if not os.path.exists(path):
+        return []
+    names: set[str] = set()
+    with open(path, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            name = (row.get("competitor_name") or "").strip()
+            if name:
+                names.add(name)
+    return sorted(names)
+
+
+def _slugify_retailer(name: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+    return slug or "competitor"
+
+
+def _market_from_site(url: str) -> str:
+    host = (url or "").lower()
+    if ".ch" in host:
+        return "CH"
+    if ".de" in host or ".at" in host:
+        return "DE"
+    if ".fr" in host:
+        return "FR"
+    if ".com" in host or ".us" in host:
+        return "US"
+    return "GLOBAL"
+
+
+def _product_name_from_bundle(row: dict) -> str:
+    desc = (row.get("product_description") or "").strip()
+    if desc:
+        name = desc.split(".")[0].strip()
+        if len(name) > 120:
+            return name[:117] + "..."
+        return name
+    parts = [row.get("brand"), row.get("product_subtype"), row.get("product_type")]
+    return " ".join(p for p in parts if p) or "Unknown product"
+
+
+def _keyword_from_bundle(row: dict) -> str:
+    product_type = (row.get("product_type") or "").strip()
+    if product_type in BUNDLE_TYPE_TO_KEYWORD:
+        return BUNDLE_TYPE_TO_KEYWORD[product_type]
+    subtype = (row.get("product_subtype") or "").strip()
+    return infer_product_category(f"{subtype} {row.get('product_description', '')}", row.get("brand", ""))
+
+
+def _is_client_product(row: dict, client: str) -> bool:
+    if not client:
+        return False
+    client_l = client.lower()
+    for field in ("competitor_name", "brand", "original_site"):
+        val = (row.get(field) or "").lower()
+        if client_l in val or val in client_l:
+            return True
+    if "decathlon" in client_l:
+        brand = (row.get("brand") or "").lower()
+        site = (row.get("original_site") or "").lower()
+        if brand in DECATHLON_HOUSE_BRANDS or "decathlon" in site:
+            return True
+    return False
+
+
+def _bundled_row_to_pipeline(row: dict, client: str) -> dict:
+    competitor_name = (row.get("competitor_name") or "Unknown").strip()
+    title = _product_name_from_bundle(row)
+    brand = (row.get("brand") or NA).strip() or NA
+    site = (row.get("original_site") or NA).strip() or NA
+    is_client = _is_client_product(row, client)
+    source = _slugify_retailer(competitor_name)
+    if is_client:
+        source = f"{source}_client"
+
+    pipeline_row = _make_product_row(
+        source=source,
+        market=_market_from_site(site),
+        title=title,
+        brand=brand,
+        price=(row.get("price") or NA).strip() or NA,
+        url=site,
+        is_client=is_client,
+    )
+    pipeline_row["keyword"] = _keyword_from_bundle(row)
+    pipeline_row["material"] = (row.get("material") or "").strip()
+    pipeline_row["feature"] = (row.get("feature") or "").strip()
+    pipeline_row["product_type"] = (row.get("product_type") or "").strip()
+    pipeline_row["product_subtype"] = (row.get("product_subtype") or "").strip()
+    pipeline_row["competitor_name"] = competitor_name
+    if pipeline_row["material"] or pipeline_row["feature"]:
+        extras = []
+        if pipeline_row["material"]:
+            extras.append(f"material: {pipeline_row['material']}")
+        if pipeline_row["feature"]:
+            extras.append(f"feature: {pipeline_row['feature']}")
+        pipeline_row["signal_name"] = f"{pipeline_row['signal_name']} ({'; '.join(extras)})"
+    return pipeline_row
+
+
+def load_bundled_competitor_products(config: dict) -> list[dict]:
+    """Load pre-scraped catalog from competitors/competitor_products.csv."""
+    path = BUNDLED_COMPETITOR_PRODUCTS_PATH
+    if not os.path.exists(path):
+        return []
+
+    client = (config.get("client_company") or "").strip()
+    seen: set[tuple] = set()
+    products: list[dict] = []
+
+    with open(path, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            key = (
+                row.get("competitor_name", ""),
+                row.get("brand", ""),
+                row.get("product_description", ""),
+                row.get("price", ""),
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            products.append(_bundled_row_to_pipeline(row, client))
+
+    retailers = sorted({p.get("competitor_name", "") for p in products if p.get("competitor_name")})
+    config["competitors"] = retailers
+    config["competitor_data_source"] = "bundled"
+    config["competitors_skipped"] = config.get("competitors_skipped") or []
+    print(
+        f"  [competitors] loaded {len(products)} products from bundled catalog "
+        f"({len(retailers)} retailers)."
+    )
+    return products
 
 
 def _match_registry_slug(name: str) -> str | None:
@@ -350,9 +509,21 @@ def write_gap_hints(hints: dict, path: str = GAP_HINTS_PATH) -> None:
 
 
 def find_competitors(config: dict) -> tuple[list[dict], dict]:
-    products = scrape_competitor_products(config)
+    use_live = config.get("competitor_data_source") == "live"
+    products: list[dict] = []
+
+    if not use_live:
+        products = load_bundled_competitor_products(config)
+
+    if not products:
+        if not use_live:
+            print("  [competitors] bundled catalog missing or empty; falling back to live scrape.")
+        products = scrape_competitor_products(config)
+        config["competitor_data_source"] = "live"
+
     hints = compute_gap_hints(products)
     write_competitor_products(products)
     write_gap_hints(hints)
-    config["competitors"] = [name for name, _, _ in resolve_competitors(config)]
+    if config.get("competitor_data_source") != "bundled":
+        config["competitors"] = [name for name, _, _ in resolve_competitors(config)]
     return products, hints

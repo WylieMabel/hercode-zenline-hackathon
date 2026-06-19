@@ -1,0 +1,185 @@
+source,market,keyword,signal_name,signal_type,product_name,brand,price,rank,url,observed_at
+google_trends_global_momentum,global,gorpcore,Search velocity (momentum) for 'gorpcore',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=gorpcore&geo=,2026-06-19T13:10:49Z
+google_trends_global_momentum,global,trail running packs,Search velocity (momentum) for 'trail running packs',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=trail running packs&geo=,2026-06-19T13:10:49Z
+google_trends_global_momentum,global,fastpacking,Search velocity (momentum) for 'fastpacking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=fastpacking&geo=,2026-06-19T13:10:49Z
+google_trends_global_momentum,global,ultralight hiking,Search velocity (momentum) for 'ultralight hiking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=ultralight hiking&geo=,2026-06-19T13:10:49Z
+google_trends_CH_momentum,CH,gorpcore,Search velocity (momentum) for 'gorpcore',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=gorpcore&geo=CH,2026-06-19T13:10:49Z
+google_trends_CH_momentum,CH,trail running packs,Search velocity (momentum) for 'trail running packs',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=trail running packs&geo=CH,2026-06-19T13:10:49Z
+google_trends_CH_momentum,CH,fastpacking,Search velocity (momentum) for 'fastpacking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=fastpacking&geo=CH,2026-06-19T13:10:49Z
+google_trends_CH_momentum,CH,ultralight hiking,Search velocity (momentum) for 'ultralight hiking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=ultralight hiking&geo=CH,2026-06-19T13:10:49Z
+google_trends_US_momentum,US,gorpcore,Search velocity (momentum) for 'gorpcore',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=gorpcore&geo=US,2026-06-19T13:10:49Z
+google_trends_US_momentum,US,trail running packs,Search velocity (momentum) for 'trail running packs',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=trail running packs&geo=US,2026-06-19T13:10:49Z
+google_trends_US_momentum,US,fastpacking,Search velocity (momentum) for 'fastpacking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=fastpacking&geo=US,2026-06-19T13:10:49Z
+google_trends_US_momentum,US,ultralight hiking,Search velocity (momentum) for 'ultralight hiking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=ultralight hiking&geo=US,2026-06-19T13:10:49Z
+google_trends_JP_momentum,JP,gorpcore,Search velocity (momentum) for 'gorpcore',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=gorpcore&geo=JP,2026-06-19T13:10:49Z
+google_trends_JP_momentum,JP,trail running packs,Search velocity (momentum) for 'trail running packs',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=trail running packs&geo=JP,2026-06-19T13:10:49Z
+google_trends_JP_momentum,JP,fastpacking,Search velocity (momentum) for 'fastpacking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=fastpacking&geo=JP,2026-06-19T13:10:49Z
+google_trends_JP_momentum,JP,ultralight hiking,Search velocity (momentum) for 'ultralight hiking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=ultralight hiking&geo=JP,2026-06-19T13:10:49Z
+google_trends_global_seasonal,global,gorpcore,Search velocity (seasonal) for 'gorpcore',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=gorpcore&geo=,2026-06-19T13:10:49Z
+google_trends_global_seasonal,global,trail running packs,Search velocity (seasonal) for 'trail running packs',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=trail running packs&geo=,2026-06-19T13:10:49Z
+google_trends_global_seasonal,global,fastpacking,Search velocity (seasonal) for 'fastpacking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=fastpacking&geo=,2026-06-19T13:10:49Z
+google_trends_global_seasonal,global,ultralight hiking,Search velocity (seasonal) for 'ultralight hiking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=ultralight hiking&geo=,2026-06-19T13:10:49Z
+google_trends_CH_seasonal,CH,gorpcore,Search velocity (seasonal) for 'gorpcore',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=gorpcore&geo=CH,2026-06-19T13:10:49Z
+google_trends_CH_seasonal,CH,trail running packs,Search velocity (seasonal) for 'trail running packs',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=trail running packs&geo=CH,2026-06-19T13:10:49Z
+google_trends_CH_seasonal,CH,fastpacking,Search velocity (seasonal) for 'fastpacking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=fastpacking&geo=CH,2026-06-19T13:10:49Z
+google_trends_CH_seasonal,CH,ultralight hiking,Search velocity (seasonal) for 'ultralight hiking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=ultralight hiking&geo=CH,2026-06-19T13:10:49Z
+google_trends_US_seasonal,US,gorpcore,Search velocity (seasonal) for 'gorpcore',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=gorpcore&geo=US,2026-06-19T13:10:49Z
+google_trends_US_seasonal,US,trail running packs,Search velocity (seasonal) for 'trail running packs',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=trail running packs&geo=US,2026-06-19T13:10:49Z
+google_trends_US_seasonal,US,fastpacking,Search velocity (seasonal) for 'fastpacking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=fastpacking&geo=US,2026-06-19T13:10:49Z
+google_trends_US_seasonal,US,ultralight hiking,Search velocity (seasonal) for 'ultralight hiking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=ultralight hiking&geo=US,2026-06-19T13:10:49Z
+google_trends_JP_seasonal,JP,gorpcore,Search velocity (seasonal) for 'gorpcore',search,N/A,N/A,N/A,0.1,https://trends.google.com/trends/explore?q=gorpcore&geo=JP,2026-06-19T13:10:49Z
+google_trends_JP_seasonal,JP,trail running packs,Search velocity (seasonal) for 'trail running packs',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=trail running packs&geo=JP,2026-06-19T13:10:49Z
+google_trends_JP_seasonal,JP,fastpacking,Search velocity (seasonal) for 'fastpacking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=fastpacking&geo=JP,2026-06-19T13:10:49Z
+google_trends_JP_seasonal,JP,ultralight hiking,Search velocity (seasonal) for 'ultralight hiking',search,N/A,N/A,N/A,0.0,https://trends.google.com/trends/explore?q=ultralight hiking&geo=JP,2026-06-19T13:10:49Z
+google_trends_global_momentum_fallback_mock,global,ultralight,Search velocity for 'ultralight' (mock),search,N/A,N/A,N/A,12,https://trends.google.com/trends/explore,2026-06-19T13:10:50Z
+google_trends_global_momentum_fallback_mock,global,back gorpcore,Search velocity for 'back gorpcore' (mock),search,N/A,N/A,N/A,9,https://trends.google.com/trends/explore,2026-06-19T13:10:50Z
+google_trends_global_momentum_fallback_mock,global,gorpcore everyday,Search velocity for 'gorpcore everyday' (mock),search,N/A,N/A,N/A,22,https://trends.google.com/trends/explore,2026-06-19T13:10:50Z
+google_trends_global_momentum_fallback_mock,global,wind river,Search velocity for 'wind river' (mock),search,N/A,N/A,N/A,19,https://trends.google.com/trends/explore,2026-06-19T13:10:50Z
+google_trends_global_momentum_fallback_mock,global,river range,Search velocity for 'river range' (mock),search,N/A,N/A,N/A,25,https://trends.google.com/trends/explore,2026-06-19T13:10:50Z
+google_trends_CH_momentum_fallback_mock,CH,ultralight,Search velocity for 'ultralight' (mock),search,N/A,N/A,N/A,19,https://trends.google.com/trends/explore,2026-06-19T13:10:51Z
+google_trends_CH_momentum_fallback_mock,CH,back gorpcore,Search velocity for 'back gorpcore' (mock),search,N/A,N/A,N/A,16,https://trends.google.com/trends/explore,2026-06-19T13:10:51Z
+google_trends_CH_momentum_fallback_mock,CH,gorpcore everyday,Search velocity for 'gorpcore everyday' (mock),search,N/A,N/A,N/A,5,https://trends.google.com/trends/explore,2026-06-19T13:10:51Z
+google_trends_CH_momentum_fallback_mock,CH,wind river,Search velocity for 'wind river' (mock),search,N/A,N/A,N/A,9,https://trends.google.com/trends/explore,2026-06-19T13:10:51Z
+google_trends_CH_momentum_fallback_mock,CH,river range,Search velocity for 'river range' (mock),search,N/A,N/A,N/A,4,https://trends.google.com/trends/explore,2026-06-19T13:10:51Z
+google_trends_US_momentum_fallback_mock,US,ultralight,Search velocity for 'ultralight' (mock),search,N/A,N/A,N/A,-5,https://trends.google.com/trends/explore,2026-06-19T13:10:52Z
+google_trends_US_momentum_fallback_mock,US,back gorpcore,Search velocity for 'back gorpcore' (mock),search,N/A,N/A,N/A,3,https://trends.google.com/trends/explore,2026-06-19T13:10:52Z
+google_trends_US_momentum_fallback_mock,US,gorpcore everyday,Search velocity for 'gorpcore everyday' (mock),search,N/A,N/A,N/A,-3,https://trends.google.com/trends/explore,2026-06-19T13:10:52Z
+google_trends_US_momentum_fallback_mock,US,wind river,Search velocity for 'wind river' (mock),search,N/A,N/A,N/A,18,https://trends.google.com/trends/explore,2026-06-19T13:10:52Z
+google_trends_US_momentum_fallback_mock,US,river range,Search velocity for 'river range' (mock),search,N/A,N/A,N/A,13,https://trends.google.com/trends/explore,2026-06-19T13:10:52Z
+google_trends_JP_momentum_fallback_mock,JP,ultralight,Search velocity for 'ultralight' (mock),search,N/A,N/A,N/A,-4,https://trends.google.com/trends/explore,2026-06-19T13:10:53Z
+google_trends_JP_momentum_fallback_mock,JP,back gorpcore,Search velocity for 'back gorpcore' (mock),search,N/A,N/A,N/A,3,https://trends.google.com/trends/explore,2026-06-19T13:10:53Z
+google_trends_JP_momentum_fallback_mock,JP,gorpcore everyday,Search velocity for 'gorpcore everyday' (mock),search,N/A,N/A,N/A,0,https://trends.google.com/trends/explore,2026-06-19T13:10:53Z
+google_trends_JP_momentum_fallback_mock,JP,wind river,Search velocity for 'wind river' (mock),search,N/A,N/A,N/A,0,https://trends.google.com/trends/explore,2026-06-19T13:10:53Z
+google_trends_JP_momentum_fallback_mock,JP,river range,Search velocity for 'river range' (mock),search,N/A,N/A,N/A,1,https://trends.google.com/trends/explore,2026-06-19T13:10:53Z
+google_trends_global_seasonal_fallback_mock,global,ultralight,Search velocity for 'ultralight' (mock),search,N/A,N/A,N/A,10,https://trends.google.com/trends/explore,2026-06-19T13:10:54Z
+google_trends_global_seasonal_fallback_mock,global,back gorpcore,Search velocity for 'back gorpcore' (mock),search,N/A,N/A,N/A,10,https://trends.google.com/trends/explore,2026-06-19T13:10:54Z
+google_trends_global_seasonal_fallback_mock,global,gorpcore everyday,Search velocity for 'gorpcore everyday' (mock),search,N/A,N/A,N/A,6,https://trends.google.com/trends/explore,2026-06-19T13:10:54Z
+google_trends_global_seasonal_fallback_mock,global,wind river,Search velocity for 'wind river' (mock),search,N/A,N/A,N/A,14,https://trends.google.com/trends/explore,2026-06-19T13:10:54Z
+google_trends_global_seasonal_fallback_mock,global,river range,Search velocity for 'river range' (mock),search,N/A,N/A,N/A,0,https://trends.google.com/trends/explore,2026-06-19T13:10:54Z
+google_trends_CH_seasonal_fallback_mock,CH,ultralight,Search velocity for 'ultralight' (mock),search,N/A,N/A,N/A,11,https://trends.google.com/trends/explore,2026-06-19T13:10:54Z
+google_trends_CH_seasonal_fallback_mock,CH,back gorpcore,Search velocity for 'back gorpcore' (mock),search,N/A,N/A,N/A,14,https://trends.google.com/trends/explore,2026-06-19T13:10:54Z
+google_trends_CH_seasonal_fallback_mock,CH,gorpcore everyday,Search velocity for 'gorpcore everyday' (mock),search,N/A,N/A,N/A,6,https://trends.google.com/trends/explore,2026-06-19T13:10:54Z
+google_trends_CH_seasonal_fallback_mock,CH,wind river,Search velocity for 'wind river' (mock),search,N/A,N/A,N/A,8,https://trends.google.com/trends/explore,2026-06-19T13:10:54Z
+google_trends_CH_seasonal_fallback_mock,CH,river range,Search velocity for 'river range' (mock),search,N/A,N/A,N/A,19,https://trends.google.com/trends/explore,2026-06-19T13:10:54Z
+google_trends_US_seasonal_fallback_mock,US,ultralight,Search velocity for 'ultralight' (mock),search,N/A,N/A,N/A,19,https://trends.google.com/trends/explore,2026-06-19T13:10:55Z
+google_trends_US_seasonal_fallback_mock,US,back gorpcore,Search velocity for 'back gorpcore' (mock),search,N/A,N/A,N/A,22,https://trends.google.com/trends/explore,2026-06-19T13:10:55Z
+google_trends_US_seasonal_fallback_mock,US,gorpcore everyday,Search velocity for 'gorpcore everyday' (mock),search,N/A,N/A,N/A,-2,https://trends.google.com/trends/explore,2026-06-19T13:10:55Z
+google_trends_US_seasonal_fallback_mock,US,wind river,Search velocity for 'wind river' (mock),search,N/A,N/A,N/A,2,https://trends.google.com/trends/explore,2026-06-19T13:10:55Z
+google_trends_US_seasonal_fallback_mock,US,river range,Search velocity for 'river range' (mock),search,N/A,N/A,N/A,24,https://trends.google.com/trends/explore,2026-06-19T13:10:55Z
+google_trends_JP_seasonal_fallback_mock,JP,ultralight,Search velocity for 'ultralight' (mock),search,N/A,N/A,N/A,16,https://trends.google.com/trends/explore,2026-06-19T13:10:56Z
+google_trends_JP_seasonal_fallback_mock,JP,back gorpcore,Search velocity for 'back gorpcore' (mock),search,N/A,N/A,N/A,6,https://trends.google.com/trends/explore,2026-06-19T13:10:56Z
+google_trends_JP_seasonal_fallback_mock,JP,gorpcore everyday,Search velocity for 'gorpcore everyday' (mock),search,N/A,N/A,N/A,20,https://trends.google.com/trends/explore,2026-06-19T13:10:56Z
+google_trends_JP_seasonal_fallback_mock,JP,wind river,Search velocity for 'wind river' (mock),search,N/A,N/A,N/A,16,https://trends.google.com/trends/explore,2026-06-19T13:10:56Z
+google_trends_JP_seasonal_fallback_mock,JP,river range,Search velocity for 'river range' (mock),search,N/A,N/A,N/A,6,https://trends.google.com/trends/explore,2026-06-19T13:10:56Z
+google_trends_global_momentum_fallback_mock,global,ultralight rain,Search velocity for 'ultralight rain' (mock),search,N/A,N/A,N/A,8,https://trends.google.com/trends/explore,2026-06-19T13:10:57Z
+google_trends_global_momentum_fallback_mock,global,rain shells,Search velocity for 'rain shells' (mock),search,N/A,N/A,N/A,10,https://trends.google.com/trends/explore,2026-06-19T13:10:57Z
+google_trends_global_momentum_fallback_mock,global,climbing,Search velocity for 'climbing' (mock),search,N/A,N/A,N/A,1,https://trends.google.com/trends/explore,2026-06-19T13:10:57Z
+google_trends_global_momentum_fallback_mock,global,gorpcore aesthetic,Search velocity for 'gorpcore aesthetic' (mock),search,N/A,N/A,N/A,11,https://trends.google.com/trends/explore,2026-06-19T13:10:57Z
+google_trends_global_momentum_fallback_mock,global,aesthetic taking,Search velocity for 'aesthetic taking' (mock),search,N/A,N/A,N/A,7,https://trends.google.com/trends/explore,2026-06-19T13:10:57Z
+google_trends_CH_momentum_fallback_mock,CH,ultralight rain,Search velocity for 'ultralight rain' (mock),search,N/A,N/A,N/A,22,https://trends.google.com/trends/explore,2026-06-19T13:10:58Z
+google_trends_CH_momentum_fallback_mock,CH,rain shells,Search velocity for 'rain shells' (mock),search,N/A,N/A,N/A,13,https://trends.google.com/trends/explore,2026-06-19T13:10:58Z
+google_trends_CH_momentum_fallback_mock,CH,climbing,Search velocity for 'climbing' (mock),search,N/A,N/A,N/A,2,https://trends.google.com/trends/explore,2026-06-19T13:10:58Z
+google_trends_CH_momentum_fallback_mock,CH,gorpcore aesthetic,Search velocity for 'gorpcore aesthetic' (mock),search,N/A,N/A,N/A,-1,https://trends.google.com/trends/explore,2026-06-19T13:10:58Z
+google_trends_CH_momentum_fallback_mock,CH,aesthetic taking,Search velocity for 'aesthetic taking' (mock),search,N/A,N/A,N/A,11,https://trends.google.com/trends/explore,2026-06-19T13:10:58Z
+google_trends_US_momentum_fallback_mock,US,ultralight rain,Search velocity for 'ultralight rain' (mock),search,N/A,N/A,N/A,24,https://trends.google.com/trends/explore,2026-06-19T13:10:59Z
+google_trends_US_momentum_fallback_mock,US,rain shells,Search velocity for 'rain shells' (mock),search,N/A,N/A,N/A,-1,https://trends.google.com/trends/explore,2026-06-19T13:10:59Z
+google_trends_US_momentum_fallback_mock,US,climbing,Search velocity for 'climbing' (mock),search,N/A,N/A,N/A,19,https://trends.google.com/trends/explore,2026-06-19T13:10:59Z
+google_trends_US_momentum_fallback_mock,US,gorpcore aesthetic,Search velocity for 'gorpcore aesthetic' (mock),search,N/A,N/A,N/A,16,https://trends.google.com/trends/explore,2026-06-19T13:10:59Z
+google_trends_US_momentum_fallback_mock,US,aesthetic taking,Search velocity for 'aesthetic taking' (mock),search,N/A,N/A,N/A,7,https://trends.google.com/trends/explore,2026-06-19T13:10:59Z
+google_trends_JP_momentum_fallback_mock,JP,ultralight rain,Search velocity for 'ultralight rain' (mock),search,N/A,N/A,N/A,15,https://trends.google.com/trends/explore,2026-06-19T13:10:59Z
+google_trends_JP_momentum_fallback_mock,JP,rain shells,Search velocity for 'rain shells' (mock),search,N/A,N/A,N/A,22,https://trends.google.com/trends/explore,2026-06-19T13:10:59Z
+google_trends_JP_momentum_fallback_mock,JP,climbing,Search velocity for 'climbing' (mock),search,N/A,N/A,N/A,7,https://trends.google.com/trends/explore,2026-06-19T13:10:59Z
+google_trends_JP_momentum_fallback_mock,JP,gorpcore aesthetic,Search velocity for 'gorpcore aesthetic' (mock),search,N/A,N/A,N/A,25,https://trends.google.com/trends/explore,2026-06-19T13:10:59Z
+google_trends_JP_momentum_fallback_mock,JP,aesthetic taking,Search velocity for 'aesthetic taking' (mock),search,N/A,N/A,N/A,6,https://trends.google.com/trends/explore,2026-06-19T13:10:59Z
+google_trends_global_seasonal_fallback_mock,global,ultralight rain,Search velocity for 'ultralight rain' (mock),search,N/A,N/A,N/A,4,https://trends.google.com/trends/explore,2026-06-19T13:11:00Z
+google_trends_global_seasonal_fallback_mock,global,rain shells,Search velocity for 'rain shells' (mock),search,N/A,N/A,N/A,11,https://trends.google.com/trends/explore,2026-06-19T13:11:00Z
+google_trends_global_seasonal_fallback_mock,global,climbing,Search velocity for 'climbing' (mock),search,N/A,N/A,N/A,-4,https://trends.google.com/trends/explore,2026-06-19T13:11:00Z
+google_trends_global_seasonal_fallback_mock,global,gorpcore aesthetic,Search velocity for 'gorpcore aesthetic' (mock),search,N/A,N/A,N/A,9,https://trends.google.com/trends/explore,2026-06-19T13:11:00Z
+google_trends_global_seasonal_fallback_mock,global,aesthetic taking,Search velocity for 'aesthetic taking' (mock),search,N/A,N/A,N/A,23,https://trends.google.com/trends/explore,2026-06-19T13:11:00Z
+google_trends_CH_seasonal_fallback_mock,CH,ultralight rain,Search velocity for 'ultralight rain' (mock),search,N/A,N/A,N/A,2,https://trends.google.com/trends/explore,2026-06-19T13:11:01Z
+google_trends_CH_seasonal_fallback_mock,CH,rain shells,Search velocity for 'rain shells' (mock),search,N/A,N/A,N/A,11,https://trends.google.com/trends/explore,2026-06-19T13:11:01Z
+google_trends_CH_seasonal_fallback_mock,CH,climbing,Search velocity for 'climbing' (mock),search,N/A,N/A,N/A,22,https://trends.google.com/trends/explore,2026-06-19T13:11:01Z
+google_trends_CH_seasonal_fallback_mock,CH,gorpcore aesthetic,Search velocity for 'gorpcore aesthetic' (mock),search,N/A,N/A,N/A,3,https://trends.google.com/trends/explore,2026-06-19T13:11:01Z
+google_trends_CH_seasonal_fallback_mock,CH,aesthetic taking,Search velocity for 'aesthetic taking' (mock),search,N/A,N/A,N/A,19,https://trends.google.com/trends/explore,2026-06-19T13:11:01Z
+google_trends_US_seasonal_fallback_mock,US,ultralight rain,Search velocity for 'ultralight rain' (mock),search,N/A,N/A,N/A,9,https://trends.google.com/trends/explore,2026-06-19T13:11:02Z
+google_trends_US_seasonal_fallback_mock,US,rain shells,Search velocity for 'rain shells' (mock),search,N/A,N/A,N/A,3,https://trends.google.com/trends/explore,2026-06-19T13:11:02Z
+google_trends_US_seasonal_fallback_mock,US,climbing,Search velocity for 'climbing' (mock),search,N/A,N/A,N/A,23,https://trends.google.com/trends/explore,2026-06-19T13:11:02Z
+google_trends_US_seasonal_fallback_mock,US,gorpcore aesthetic,Search velocity for 'gorpcore aesthetic' (mock),search,N/A,N/A,N/A,23,https://trends.google.com/trends/explore,2026-06-19T13:11:02Z
+google_trends_US_seasonal_fallback_mock,US,aesthetic taking,Search velocity for 'aesthetic taking' (mock),search,N/A,N/A,N/A,1,https://trends.google.com/trends/explore,2026-06-19T13:11:02Z
+google_trends_JP_seasonal_fallback_mock,JP,ultralight rain,Search velocity for 'ultralight rain' (mock),search,N/A,N/A,N/A,16,https://trends.google.com/trends/explore,2026-06-19T13:11:03Z
+google_trends_JP_seasonal_fallback_mock,JP,rain shells,Search velocity for 'rain shells' (mock),search,N/A,N/A,N/A,1,https://trends.google.com/trends/explore,2026-06-19T13:11:03Z
+google_trends_JP_seasonal_fallback_mock,JP,climbing,Search velocity for 'climbing' (mock),search,N/A,N/A,N/A,7,https://trends.google.com/trends/explore,2026-06-19T13:11:03Z
+google_trends_JP_seasonal_fallback_mock,JP,gorpcore aesthetic,Search velocity for 'gorpcore aesthetic' (mock),search,N/A,N/A,N/A,-3,https://trends.google.com/trends/explore,2026-06-19T13:11:03Z
+google_trends_JP_seasonal_fallback_mock,JP,aesthetic taking,Search velocity for 'aesthetic taking' (mock),search,N/A,N/A,N/A,2,https://trends.google.com/trends/explore,2026-06-19T13:11:03Z
+google_trends_global_momentum_fallback_mock,global,approach,Search velocity for 'approach' (mock),search,N/A,N/A,N/A,3,https://trends.google.com/trends/explore,2026-06-19T13:11:04Z
+google_trends_global_momentum_fallback_mock,global,approach shoes,Search velocity for 'approach shoes' (mock),search,N/A,N/A,N/A,6,https://trends.google.com/trends/explore,2026-06-19T13:11:04Z
+google_trends_global_momentum_fallback_mock,global,double everyday,Search velocity for 'double everyday' (mock),search,N/A,N/A,N/A,-4,https://trends.google.com/trends/explore,2026-06-19T13:11:04Z
+google_trends_global_momentum_fallback_mock,global,darkside,Search velocity for 'darkside' (mock),search,N/A,N/A,N/A,9,https://trends.google.com/trends/explore,2026-06-19T13:11:04Z
+google_trends_global_momentum_fallback_mock,global,darkside gorpcore,Search velocity for 'darkside gorpcore' (mock),search,N/A,N/A,N/A,25,https://trends.google.com/trends/explore,2026-06-19T13:11:04Z
+google_trends_CH_momentum_fallback_mock,CH,approach,Search velocity for 'approach' (mock),search,N/A,N/A,N/A,14,https://trends.google.com/trends/explore,2026-06-19T13:11:05Z
+google_trends_CH_momentum_fallback_mock,CH,approach shoes,Search velocity for 'approach shoes' (mock),search,N/A,N/A,N/A,-1,https://trends.google.com/trends/explore,2026-06-19T13:11:05Z
+google_trends_CH_momentum_fallback_mock,CH,double everyday,Search velocity for 'double everyday' (mock),search,N/A,N/A,N/A,6,https://trends.google.com/trends/explore,2026-06-19T13:11:05Z
+google_trends_CH_momentum_fallback_mock,CH,darkside,Search velocity for 'darkside' (mock),search,N/A,N/A,N/A,-5,https://trends.google.com/trends/explore,2026-06-19T13:11:05Z
+google_trends_CH_momentum_fallback_mock,CH,darkside gorpcore,Search velocity for 'darkside gorpcore' (mock),search,N/A,N/A,N/A,23,https://trends.google.com/trends/explore,2026-06-19T13:11:05Z
+google_trends_US_momentum_fallback_mock,US,approach,Search velocity for 'approach' (mock),search,N/A,N/A,N/A,9,https://trends.google.com/trends/explore,2026-06-19T13:11:05Z
+google_trends_US_momentum_fallback_mock,US,approach shoes,Search velocity for 'approach shoes' (mock),search,N/A,N/A,N/A,8,https://trends.google.com/trends/explore,2026-06-19T13:11:05Z
+google_trends_US_momentum_fallback_mock,US,double everyday,Search velocity for 'double everyday' (mock),search,N/A,N/A,N/A,-2,https://trends.google.com/trends/explore,2026-06-19T13:11:05Z
+google_trends_US_momentum_fallback_mock,US,darkside,Search velocity for 'darkside' (mock),search,N/A,N/A,N/A,23,https://trends.google.com/trends/explore,2026-06-19T13:11:05Z
+google_trends_US_momentum_fallback_mock,US,darkside gorpcore,Search velocity for 'darkside gorpcore' (mock),search,N/A,N/A,N/A,13,https://trends.google.com/trends/explore,2026-06-19T13:11:05Z
+google_trends_JP_momentum_fallback_mock,JP,approach,Search velocity for 'approach' (mock),search,N/A,N/A,N/A,21,https://trends.google.com/trends/explore,2026-06-19T13:11:06Z
+google_trends_JP_momentum_fallback_mock,JP,approach shoes,Search velocity for 'approach shoes' (mock),search,N/A,N/A,N/A,-2,https://trends.google.com/trends/explore,2026-06-19T13:11:06Z
+google_trends_JP_momentum_fallback_mock,JP,double everyday,Search velocity for 'double everyday' (mock),search,N/A,N/A,N/A,-4,https://trends.google.com/trends/explore,2026-06-19T13:11:06Z
+google_trends_JP_momentum_fallback_mock,JP,darkside,Search velocity for 'darkside' (mock),search,N/A,N/A,N/A,20,https://trends.google.com/trends/explore,2026-06-19T13:11:06Z
+google_trends_JP_momentum_fallback_mock,JP,darkside gorpcore,Search velocity for 'darkside gorpcore' (mock),search,N/A,N/A,N/A,-4,https://trends.google.com/trends/explore,2026-06-19T13:11:06Z
+google_trends_global_seasonal_fallback_mock,global,approach,Search velocity for 'approach' (mock),search,N/A,N/A,N/A,3,https://trends.google.com/trends/explore,2026-06-19T13:11:07Z
+google_trends_global_seasonal_fallback_mock,global,approach shoes,Search velocity for 'approach shoes' (mock),search,N/A,N/A,N/A,21,https://trends.google.com/trends/explore,2026-06-19T13:11:07Z
+google_trends_global_seasonal_fallback_mock,global,double everyday,Search velocity for 'double everyday' (mock),search,N/A,N/A,N/A,1,https://trends.google.com/trends/explore,2026-06-19T13:11:07Z
+google_trends_global_seasonal_fallback_mock,global,darkside,Search velocity for 'darkside' (mock),search,N/A,N/A,N/A,24,https://trends.google.com/trends/explore,2026-06-19T13:11:07Z
+google_trends_global_seasonal_fallback_mock,global,darkside gorpcore,Search velocity for 'darkside gorpcore' (mock),search,N/A,N/A,N/A,0,https://trends.google.com/trends/explore,2026-06-19T13:11:07Z
+google_trends_CH_seasonal_fallback_mock,CH,approach,Search velocity for 'approach' (mock),search,N/A,N/A,N/A,18,https://trends.google.com/trends/explore,2026-06-19T13:11:08Z
+google_trends_CH_seasonal_fallback_mock,CH,approach shoes,Search velocity for 'approach shoes' (mock),search,N/A,N/A,N/A,-2,https://trends.google.com/trends/explore,2026-06-19T13:11:08Z
+google_trends_CH_seasonal_fallback_mock,CH,double everyday,Search velocity for 'double everyday' (mock),search,N/A,N/A,N/A,7,https://trends.google.com/trends/explore,2026-06-19T13:11:08Z
+google_trends_CH_seasonal_fallback_mock,CH,darkside,Search velocity for 'darkside' (mock),search,N/A,N/A,N/A,-5,https://trends.google.com/trends/explore,2026-06-19T13:11:08Z
+google_trends_CH_seasonal_fallback_mock,CH,darkside gorpcore,Search velocity for 'darkside gorpcore' (mock),search,N/A,N/A,N/A,14,https://trends.google.com/trends/explore,2026-06-19T13:11:08Z
+google_trends_US_seasonal_fallback_mock,US,approach,Search velocity for 'approach' (mock),search,N/A,N/A,N/A,16,https://trends.google.com/trends/explore,2026-06-19T13:11:08Z
+google_trends_US_seasonal_fallback_mock,US,approach shoes,Search velocity for 'approach shoes' (mock),search,N/A,N/A,N/A,-1,https://trends.google.com/trends/explore,2026-06-19T13:11:08Z
+google_trends_US_seasonal_fallback_mock,US,double everyday,Search velocity for 'double everyday' (mock),search,N/A,N/A,N/A,14,https://trends.google.com/trends/explore,2026-06-19T13:11:08Z
+google_trends_US_seasonal_fallback_mock,US,darkside,Search velocity for 'darkside' (mock),search,N/A,N/A,N/A,19,https://trends.google.com/trends/explore,2026-06-19T13:11:08Z
+google_trends_US_seasonal_fallback_mock,US,darkside gorpcore,Search velocity for 'darkside gorpcore' (mock),search,N/A,N/A,N/A,-4,https://trends.google.com/trends/explore,2026-06-19T13:11:08Z
+google_trends_JP_seasonal_fallback_mock,JP,approach,Search velocity for 'approach' (mock),search,N/A,N/A,N/A,1,https://trends.google.com/trends/explore,2026-06-19T13:11:09Z
+google_trends_JP_seasonal_fallback_mock,JP,approach shoes,Search velocity for 'approach shoes' (mock),search,N/A,N/A,N/A,24,https://trends.google.com/trends/explore,2026-06-19T13:11:09Z
+google_trends_JP_seasonal_fallback_mock,JP,double everyday,Search velocity for 'double everyday' (mock),search,N/A,N/A,N/A,9,https://trends.google.com/trends/explore,2026-06-19T13:11:09Z
+google_trends_JP_seasonal_fallback_mock,JP,darkside,Search velocity for 'darkside' (mock),search,N/A,N/A,N/A,20,https://trends.google.com/trends/explore,2026-06-19T13:11:09Z
+google_trends_JP_seasonal_fallback_mock,JP,darkside gorpcore,Search velocity for 'darkside gorpcore' (mock),search,N/A,N/A,N/A,14,https://trends.google.com/trends/explore,2026-06-19T13:11:09Z
+google_trends_global_momentum_fallback_mock,global,streetcube,Search velocity for 'streetcube' (mock),search,N/A,N/A,N/A,-3,https://trends.google.com/trends/explore,2026-06-19T13:11:10Z
+google_trends_global_momentum_fallback_mock,global,streetcube gorpcore,Search velocity for 'streetcube gorpcore' (mock),search,N/A,N/A,N/A,18,https://trends.google.com/trends/explore,2026-06-19T13:11:10Z
+google_trends_global_momentum_fallback_mock,global,gorpcore outdoor,Search velocity for 'gorpcore outdoor' (mock),search,N/A,N/A,N/A,3,https://trends.google.com/trends/explore,2026-06-19T13:11:10Z
+google_trends_global_momentum_fallback_mock,global,hottest,Search velocity for 'hottest' (mock),search,N/A,N/A,N/A,15,https://trends.google.com/trends/explore,2026-06-19T13:11:10Z
+google_trends_CH_momentum_fallback_mock,CH,streetcube,Search velocity for 'streetcube' (mock),search,N/A,N/A,N/A,11,https://trends.google.com/trends/explore,2026-06-19T13:11:11Z
+google_trends_CH_momentum_fallback_mock,CH,streetcube gorpcore,Search velocity for 'streetcube gorpcore' (mock),search,N/A,N/A,N/A,-3,https://trends.google.com/trends/explore,2026-06-19T13:11:11Z
+google_trends_CH_momentum_fallback_mock,CH,gorpcore outdoor,Search velocity for 'gorpcore outdoor' (mock),search,N/A,N/A,N/A,18,https://trends.google.com/trends/explore,2026-06-19T13:11:11Z
+google_trends_CH_momentum_fallback_mock,CH,hottest,Search velocity for 'hottest' (mock),search,N/A,N/A,N/A,-5,https://trends.google.com/trends/explore,2026-06-19T13:11:11Z
+google_trends_US_momentum_fallback_mock,US,streetcube,Search velocity for 'streetcube' (mock),search,N/A,N/A,N/A,-4,https://trends.google.com/trends/explore,2026-06-19T13:11:11Z
+google_trends_US_momentum_fallback_mock,US,streetcube gorpcore,Search velocity for 'streetcube gorpcore' (mock),search,N/A,N/A,N/A,17,https://trends.google.com/trends/explore,2026-06-19T13:11:11Z
+google_trends_US_momentum_fallback_mock,US,gorpcore outdoor,Search velocity for 'gorpcore outdoor' (mock),search,N/A,N/A,N/A,20,https://trends.google.com/trends/explore,2026-06-19T13:11:11Z
+google_trends_US_momentum_fallback_mock,US,hottest,Search velocity for 'hottest' (mock),search,N/A,N/A,N/A,7,https://trends.google.com/trends/explore,2026-06-19T13:11:11Z
+google_trends_JP_momentum_fallback_mock,JP,streetcube,Search velocity for 'streetcube' (mock),search,N/A,N/A,N/A,8,https://trends.google.com/trends/explore,2026-06-19T13:11:12Z
+google_trends_JP_momentum_fallback_mock,JP,streetcube gorpcore,Search velocity for 'streetcube gorpcore' (mock),search,N/A,N/A,N/A,24,https://trends.google.com/trends/explore,2026-06-19T13:11:12Z
+google_trends_JP_momentum_fallback_mock,JP,gorpcore outdoor,Search velocity for 'gorpcore outdoor' (mock),search,N/A,N/A,N/A,12,https://trends.google.com/trends/explore,2026-06-19T13:11:12Z
+google_trends_JP_momentum_fallback_mock,JP,hottest,Search velocity for 'hottest' (mock),search,N/A,N/A,N/A,2,https://trends.google.com/trends/explore,2026-06-19T13:11:12Z
+google_trends_global_seasonal_fallback_mock,global,streetcube,Search velocity for 'streetcube' (mock),search,N/A,N/A,N/A,6,https://trends.google.com/trends/explore,2026-06-19T13:11:13Z
+google_trends_global_seasonal_fallback_mock,global,streetcube gorpcore,Search velocity for 'streetcube gorpcore' (mock),search,N/A,N/A,N/A,-3,https://trends.google.com/trends/explore,2026-06-19T13:11:13Z
+google_trends_global_seasonal_fallback_mock,global,gorpcore outdoor,Search velocity for 'gorpcore outdoor' (mock),search,N/A,N/A,N/A,-2,https://trends.google.com/trends/explore,2026-06-19T13:11:13Z
+google_trends_global_seasonal_fallback_mock,global,hottest,Search velocity for 'hottest' (mock),search,N/A,N/A,N/A,5,https://trends.google.com/trends/explore,2026-06-19T13:11:13Z
+google_trends_CH_seasonal_fallback_mock,CH,streetcube,Search velocity for 'streetcube' (mock),search,N/A,N/A,N/A,-1,https://trends.google.com/trends/explore,2026-06-19T13:11:14Z
+google_trends_CH_seasonal_fallback_mock,CH,streetcube gorpcore,Search velocity for 'streetcube gorpcore' (mock),search,N/A,N/A,N/A,25,https://trends.google.com/trends/explore,2026-06-19T13:11:14Z
+google_trends_CH_seasonal_fallback_mock,CH,gorpcore outdoor,Search velocity for 'gorpcore outdoor' (mock),search,N/A,N/A,N/A,9,https://trends.google.com/trends/explore,2026-06-19T13:11:14Z
+google_trends_CH_seasonal_fallback_mock,CH,hottest,Search velocity for 'hottest' (mock),search,N/A,N/A,N/A,18,https://trends.google.com/trends/explore,2026-06-19T13:11:14Z
+google_trends_US_seasonal_fallback_mock,US,streetcube,Search velocity for 'streetcube' (mock),search,N/A,N/A,N/A,1,https://trends.google.com/trends/explore,2026-06-19T13:11:14Z
+google_trends_US_seasonal_fallback_mock,US,streetcube gorpcore,Search velocity for 'streetcube gorpcore' (mock),search,N/A,N/A,N/A,3,https://trends.google.com/trends/explore,2026-06-19T13:11:14Z
+google_trends_US_seasonal_fallback_mock,US,gorpcore outdoor,Search velocity for 'gorpcore outdoor' (mock),search,N/A,N/A,N/A,25,https://trends.google.com/trends/explore,2026-06-19T13:11:14Z
+google_trends_US_seasonal_fallback_mock,US,hottest,Search velocity for 'hottest' (mock),search,N/A,N/A,N/A,3,https://trends.google.com/trends/explore,2026-06-19T13:11:14Z
+google_trends_JP_seasonal_fallback_mock,JP,streetcube,Search velocity for 'streetcube' (mock),search,N/A,N/A,N/A,-5,https://trends.google.com/trends/explore,2026-06-19T13:11:15Z
+google_trends_JP_seasonal_fallback_mock,JP,streetcube gorpcore,Search velocity for 'streetcube gorpcore' (mock),search,N/A,N/A,N/A,17,https://trends.google.com/trends/explore,2026-06-19T13:11:15Z
+google_trends_JP_seasonal_fallback_mock,JP,gorpcore outdoor,Search velocity for 'gorpcore outdoor' (mock),search,N/A,N/A,N/A,13,https://trends.google.com/trends/explore,2026-06-19T13:11:15Z
+google_trends_JP_seasonal_fallback_mock,JP,hottest,Search velocity for 'hottest' (mock),search,N/A,N/A,N/A,18,https://trends.google.com/trends/explore,2026-06-19T13:11:15Z

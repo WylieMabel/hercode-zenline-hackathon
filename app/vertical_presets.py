@@ -30,6 +30,14 @@ SWISS_OUTDOOR_PRESET = {
         "olive and stone", "sand and charcoal", "earth neutrals", "high-vis accent",
     ],
     "compare_markets": ["CH", "US", "JP"],
+    "youtube_queries": [
+        "gorpcore outfit",
+        "ultralight backpacking gear",
+        "trail running vest",
+        "alpine hiking Switzerland",
+        "fastpacking setup",
+        "waterproof hiking jacket",
+    ],
     "opportunity_types_focus": [
         "product_type", "material", "feature", "aesthetic", "color_palette",
         "brand", "price_gap", "merchandising",
@@ -65,7 +73,7 @@ def apply_vertical_preset(config: dict) -> dict:
     config["vertical_label"] = preset.get("label", preset_key)
 
     for field in (
-        "keywords", "competitors", "hashtags", "subreddits",
+        "keywords", "competitors", "hashtags", "subreddits", "youtube_queries",
         "aesthetic_lexicon", "materials_watchlist", "features_watchlist",
         "color_palettes_watchlist", "compare_markets", "opportunity_types_focus",
     ):
