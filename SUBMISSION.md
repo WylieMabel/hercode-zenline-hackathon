@@ -38,7 +38,7 @@ To run the full pipeline in the UI:
 
 Optional:
 
-- **Claude API key** — enter in the Streamlit sidebar (session only, never saved to disk) for richer config and recommendations.
+- **Claude API key** — enter in the **Pipeline** tab under "Claude API key (optional)" (session only, never saved to disk) for richer config and recommendations.
 - **YouTube API key** — only needed to refresh bundled social data: `YOUTUBE_API_KEY=your_key python3 scripts/snapshot_bundled_signals.py --live`
 
 CLI alternative (full pipeline, no UI):
@@ -83,13 +83,15 @@ See [`.env.example`](.env.example) for optional environment variables.
 
 ## Ranked Opportunities
 
+Without a Claude API key the pipeline uses deterministic rule-based compilation. With a key it produces richer narrative labels; the table below reflects rule-based output.
+
 | Rank | Opportunity | Evidence | Confidence |
 | --- | --- | --- | --- |
-| 1 | Earth Tone Colorway Expansion in Outdoor Apparel | YouTube earth-tone video cluster (26 videos); olive/sand/stone palettes in trend facets | medium |
-| 2 | Gore-Tex & Advanced Waterproof Technology as Hero Narrative | Waterproof/breathable facets; Gore-Tex material signal; 89 competitor gap brands | high |
-| 3 | Ultralight & Fastpacking Product Category Build-Out | fastpacking/ultralight top trends; assortment white space vs 106 competitor brands | medium |
-| 4 | Gorpcore x Technical Casual Merchandising Edit | Gorpcore aesthetic + YouTube outdoor-streetwear crossover content | medium |
-| 5 | Mindfulness & Nature-Wellbeing Content Community | YouTube wellness/nature frequency cluster (directional; see limitations) | low |
+| 1 | Scout brand: Napapijri | At multiple competitors but absent from client assortment | medium |
+| 2 | Category gap: accessories | Present at competitors, under-represented in client catalog | medium |
+| 3 | Material watch: merino | Surfaces across social and publication signals | medium |
+| 4 | Colour direction: olive | Gaining visibility in trend facets | medium |
+| 5 | Feature trend: waterproof | Technical feature across competitor products; evaluate supplier options | low |
 
 ## Evidence Trail
 
@@ -107,7 +109,7 @@ To audit recommendation **#1** or **#2**:
 
 - Change **location**, **market**, or **client** in the Streamlit Pipeline tab and re-run.
 - Add new verticals in [`app/vertical_presets.py`](app/vertical_presets.py) (`VERTICAL_PRESETS` dict).
-- Swap competitor data by updating [`competitors/competitor_products.csv`](competitors/competitor_products.csv) (source list in `competitors/extracted_websites.csv`).
+- Swap competitor data by updating [`competitors/competitor_products.csv`](competitors/competitor_products.csv).
 - Toggle data sources in config: `competitor_data_source`, `youtube_data_source`, `regional_data_source`, `trends_data_source` — `bundled` (offline demo) vs `live` (APIs).
 - Scoring is fully deterministic (`app/scoring.py`); LLM is optional for config, facet extraction, and recommendation narrative.
 
@@ -115,9 +117,9 @@ To audit recommendation **#1** or **#2**:
 
 - **Reddit** is often blocked (403) → `reddit_fallback_mock` rows; **TikTok** is simulated (`tiktok_mock`).
 - **Google Trends** live API rate-limits; demo uses bundled `data/bundled/google_trends_signals.csv`.
-- Competitor catalog includes some non-core outdoor retailers (e.g. golf) from `competitors/extracted_websites.csv`.
+- Competitor catalog (`competitors/competitor_products.csv`) may include some non-core outdoor retailers (e.g. golf).
 - **No strict relevance filter** between YouTube/Trends rows and competitor SKUs — product seeds influence search queries but do not gate results.
-- `commercial_fit` scoring references `data_generation/fake_data.csv` (archived); dimension uses a neutral fallback when file is absent.
+- `commercial_fit` scoring references `archive/data_generation/fake_data.csv` (archived); dimension uses a neutral fallback when file is absent.
 - CSV writes **replace** on each pipeline run (not append).
 - Opportunity **#5** (nature-wellbeing content) is low-confidence and directional — included to show `content_community` opportunity type, not core outdoor product proof.
 
