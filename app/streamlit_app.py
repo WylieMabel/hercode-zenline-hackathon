@@ -219,7 +219,14 @@ with tab_pipeline:
                         + ", ".join(config["competitors_skipped"])
                     )
                 if config.get("competitors"):
-                    st.caption(f"Scraping: {', '.join(config['competitors'])}")
+                    src = config.get("competitor_data_source", "bundled")
+                    if src == "bundled":
+                        st.caption(
+                            f"Bundled catalog: {len(products)} products across "
+                            f"{len(config['competitors'])} retailers"
+                        )
+                    else:
+                        st.caption(f"Live scrape: {', '.join(config['competitors'][:8])}")
                 if ok:
                     s1.update(label=f"Step 1: {len(products)} competitor products ✓", state="complete")
                 else:

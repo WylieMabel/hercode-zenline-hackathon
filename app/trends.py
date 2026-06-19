@@ -6,9 +6,11 @@ import json
 import os
 import random
 import time
+import glob
 from typing import Any
 
 from pipeline_config import PROJECT_ROOT
+from signals_bundled import TRENDS_BUNDLED_PATH, load_bundled_rows, use_bundled_trends
 from signals_common import NA, make_row
 
 CACHE_DIR = os.path.join(PROJECT_ROOT, "cache")
@@ -69,7 +71,89 @@ def _source_label(geo: str, pass_name: str) -> str:
     return f"{base}_{pass_name}"
 
 
+def _parse_cache_filename(name: str) -> tuple[str, str, str] | None:
+    """Parse trends_{keyword}_{geo}_{window}.json → keyword, geo, window."""
+    if not name.startswith("trends_") or not name.endswith(".json"):
+        return None
+    body = name[len("trends_") : -len(".json")]
+    for geo in ("global", "CH", "US", "JP"):
+        token = f"_{geo}_"
+        if token not in body:
+            continue
+        keyword, window_token = body.split(token, 1)
+        window = window_token.replace("_", " ")
+        return keyword.replace("_", " "), geo if geo != "global" else "", window
+    return None
+
+
+def rows_from_trends_cache(config: dict | None = None) -> list[dict]:
+    """Build trend signal rows from cache/*.json without calling pytrends."""
+    import pandas as pd
+
+    config = config or {}
+    tw = config.get("time_windows", {})
+    momentum_window = tw.get("trends_momentum", "today 3-m")
+    seasonal_window = tw.get("trends_seasonal", "today 12-m")
+    rows: list[dict] = []
+    velocities_by_kw: dict[str, dict[str, float]] = {}
+
+    for path in sorted(glob.glob(os.path.join(CACHE_DIR, "trends_*.json"))):
+        parsed = _parse_cache_filename(os.path.basename(path))
+        if not parsed:
+            continue
+        keyword, geo, window = parsed
+        pass_name = "seasonal" if window == seasonal_window else "momentum"
+        mode = pass_name
+        market = _market_label(geo)
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        for kw, series_vals in data.items():
+            if not series_vals:
+                continue
+            series = pd.Series(series_vals)
+            velocity = round(_velocity_from_series(series, mode), 1)
+            note = f"window: {window}, geo: {market}, pass: {pass_name}; bundled cache"
+            row = make_row(
+                source=_source_label(geo, pass_name),
+                market=market,
+                keyword=kw,
+                signal_name=f"Search velocity ({pass_name}) for '{kw}'",
+                signal_type="search",
+                rank=velocity,
+                url=f"https://trends.google.com/trends/explore?q={kw}&geo={geo}",
+            )
+            row["notes"] = note
+            rows.append(row)
+            velocities_by_kw.setdefault(kw, {})[f"{market}:{pass_name}"] = velocity
+
+    ch_vel = {
+        kw: markets.get("CH:momentum", markets.get("CH:seasonal", 0))
+        for kw, markets in velocities_by_kw.items()
+    }
+    for row in rows:
+        kw = row.get("keyword")
+        market = row.get("market")
+        if market in ("US", "JP") and kw in ch_vel:
+            try:
+                v = float(row.get("rank", 0))
+            except (TypeError, ValueError):
+                continue
+            if v - ch_vel[kw] > TRANSFERABILITY_THRESHOLD:
+                row["notes"] = (row.get("notes") or "") + "; stronger abroad vs CH"
+    return rows
+
+
 def collect_trends(config: dict, extra_keywords: list[str] | None = None) -> list[dict]:
+    if use_bundled_trends(config):
+        bundled = load_bundled_rows(TRENDS_BUNDLED_PATH)
+        if bundled:
+            print(f"  [trends] loaded {len(bundled)} bundled rows.")
+            return bundled
+
+    return _collect_trends_live(config, extra_keywords)
+
+
+def _collect_trends_live(config: dict, extra_keywords: list[str] | None = None) -> list[dict]:
     keywords = list(dict.fromkeys((config.get("keywords") or []) + (extra_keywords or [])))
     if not keywords:
         return []
