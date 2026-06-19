@@ -1,0 +1,86 @@
+{
+  "trends": [
+    "trail running packs",
+    "ultralight hiking",
+    "fastpacking",
+    "technical casual",
+    "gorpcore",
+    "waterproof hiking jacket"
+  ],
+  "products": [
+    "Designed for everyday versatility, the Burgee Hoodie is built for everyday wear with a relaxed oversized fit, a front...",
+    "The Hoku Socks are crafted from slight stretch fabric in a jacquard knit for a soft and comfortable feel, perfect for...",
+    "Reflecting Napapijri\u2019s modern approach to adventure, the Lustre Piqu\u00e9 Short Sleeve Polo blends the brand's signature ...",
+    "Erlebe mit dem Tour Golfhandschuh eine neue Dimension des Spielgef\u00fchls auf dem Platz",
+    "Teammachine ALR DISC ONE",
+    "This merino wool T-shirt (70%) allows you to travel light while carrying little clothing",
+    "Alle \"Barger\u00e4te\" der Kollektion Manhattan \u00fcberzeugen selbst professionelle Barkeeper durch ihre Funktionalit\u00e4t und ih...",
+    "Die Titleist Montauk Lightweight Cap ist deine erste Wahl f\u00fcr sonnige Golftage"
+  ],
+  "features": [
+    "waterproof",
+    "breathable",
+    "ultralight",
+    "modular",
+    "dwr"
+  ],
+  "materials": [
+    "merino",
+    "gore-tex",
+    "nylon",
+    "polyester",
+    "fleece"
+  ],
+  "aesthetics": [
+    "gorpcore",
+    "minimal",
+    "earth tone",
+    "technical",
+    "alpine"
+  ],
+  "color_palettes": [
+    "olive",
+    "sand",
+    "stone",
+    "black",
+    "neon"
+  ],
+  "recommendations": [
+    "Monitor rising search terms in non-CH markets for transferability",
+    "Test-buy products in categories competitors list but client does not"
+  ],
+  "provenance": {
+    "trends": [],
+    "products": [],
+    "features": [
+      "https://www.reddit.com/r/ultralight/comments/r1a1/",
+      "https://www.reddit.com/r/ultralight/comments/r1a2/",
+      "https://www.reddit.com/r/ultralight/comments/r1a3/",
+      "https://www.youtube.com/watch?v=m2hMbzIK8Lc",
+      "https://www.youtube.com/watch?v=9x24sbfGJI8"
+    ],
+    "materials": [
+      "https://www.youtube.com/watch?v=xWUoyiXnyjk",
+      "https://www.youtube.com/watch?v=rHdMviAhDtE",
+      "https://www.youtube.com/watch?v=IxE9p_YTuxA",
+      "https://www.youtube.com/watch?v=xwgr8w42478",
+      "https://www.youtube.com/watch?v=q7VnSzzBweM"
+    ],
+    "aesthetics": [
+      "https://www.reddit.com/r/ultralight/comments/r1a1/",
+      "https://www.reddit.com/r/climbing/comments/r2a1/",
+      "https://www.youtube.com/watch?v=IRv9sB7Tn1o",
+      "https://www.youtube.com/watch?v=tbVlrtVhx9c",
+      "https://www.youtube.com/watch?v=ZeqWf9NblXg"
+    ],
+    "color_palettes": [
+      "https://www.youtube.com/watch?v=ImyyphwhZJM",
+      "https://www.youtube.com/watch?v=oFHu8_UmnTg",
+      "https://www.youtube.com/watch?v=fHsR6cu6MEw",
+      "https://www.youtube.com/watch?v=X-2DBs-P2Hw",
+      "https://www.youtube.com/watch?v=Bq4rmeIvJbs"
+    ],
+    "recommendations": []
+  },
+  "extraction_method": "rule_based"
+}

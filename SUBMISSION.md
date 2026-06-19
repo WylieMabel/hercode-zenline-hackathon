@@ -5,7 +5,8 @@
 - Team name: HerShe(y)
 - Team members: Sarah Verreault, Mabel Wylie
 - GitHub fork URL: https://github.com/WylieMabel/hercode-zenline-hackathon
-- Demo URL: http://localhost:8501 (after `streamlit run app/streamlit_app.py`)
+- Demo URL: http://localhost:3000 (after `cd frontend && npm install && npm run dev`) — **recommended for presentation**
+- Alternate UI: http://localhost:8501 (after `streamlit run app/streamlit_app.py`)
 - Video walkthrough URL: *(optional — not recorded)*
 
 ## Summary
@@ -16,25 +17,38 @@ Full pipeline documentation: [`docs/PIPELINE.md`](docs/PIPELINE.md). Scoring met
 
 ## How To Run
 
-Tested on **Python 3.12.6** (macOS). Python 3.10+ recommended.
+Tested on **Python 3.12.6** (macOS). Python 3.10+ and Node 18+ recommended.
+
+### Recommended: Next.js dashboard
 
 ```bash
 git clone https://github.com/WylieMabel/hercode-zenline-hackathon.git
+cd hercode-zenline-hackathon/frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:3000 — **Opportunities** tab loads committed `ranked_recommendations.csv` (no API keys, no pipeline run required).
+
+### Alternate: Streamlit
+
+```bash
 cd hercode-zenline-hackathon
 python3 -m pip install -r requirements.txt
 streamlit run app/streamlit_app.py
 ```
 
-Open http://localhost:8501 in your browser.
+Open http://localhost:8501.
 
-**No API keys required for the default demo.** The pipeline uses bundled offline data (`data/bundled/*.csv` and `competitors/competitor_products.csv`). On first load, the **Opportunities** tab shows recommendations from committed `ranked_recommendations.csv`.
+**No API keys required for the default demo.** Bundled offline data (`data/bundled/*.csv`, `competitors/competitor_products.csv`) and committed `ranked_recommendations.csv` load on first page view.
 
-To run the full pipeline in the UI:
+To re-run the full Python pipeline (Streamlit **Pipeline** tab):
 
-1. Open the **Pipeline** tab.
-2. Leave defaults: Switzerland, Swiss outdoor, Decathlon.
-3. Click **Run Pipeline**.
-4. Switch to **Opportunities** for ranked results.
+1. Leave defaults: Switzerland, Swiss outdoor, Decathlon.
+2. Optionally paste a **Claude API key** for richer LLM recommendations (session only).
+3. Click **Run Pipeline** → switch to **Opportunities**.
+
+**Do not use the Next.js “Run Pipeline” button** before judging — it only re-collects signals and does not pass a Claude key to the compiler.
 
 Optional:
 
@@ -65,7 +79,8 @@ See [`.env.example`](.env.example) for optional environment variables.
 
 ## Outputs
 
-- **Dashboard / UI:** Streamlit app (`app/streamlit_app.py`) — Pipeline tab + Opportunities tab (Trend / Why / Evidence / Details)
+- **Dashboard / UI:** Next.js app (`frontend/`, port 3000) — Opportunities, Report, Pipeline tabs; sorted best-first by confidence and action
+- **Alternate UI:** Streamlit (`app/streamlit_app.py`, port 8501)
 - **Report:** [`ranked_recommendations.csv`](ranked_recommendations.csv) — final ranked opportunities
 - **Structured data:**
 
@@ -77,21 +92,24 @@ See [`.env.example`](.env.example) for optional environment variables.
 | `competitor_products.csv` | Normalized competitor assortment |
 | `social_signals.csv` | Social layer (YouTube-led) |
 | `google_trends_signals.csv` | Google Trends layer only |
+| `trend_insights.json` | Sample facet extraction (also regenerated on pipeline run) |
+| `competitor_gap_hints.json` | Sample competitor gap summary (also regenerated on run) |
 | `data/bundled/*.csv` | Offline snapshots for reproducible demo |
 
-- **Generated on pipeline run** (gitignored, reproducible): `pipeline_config.json`, `trend_insights.json`, `competitor_gap_hints.json`
+- **Regenerated on pipeline run:** `pipeline_config.json` (and fresh copies of `trend_insights.json`, `competitor_gap_hints.json`)
 
 ## Ranked Opportunities
 
-Without a Claude API key the pipeline uses deterministic rule-based compilation. With a key it produces richer narrative labels; the table below reflects rule-based output.
+Committed output from LLM compilation (`ranked_recommendations.csv`). UI sorts **best → worst** by confidence, then workflow (buy/launch first), then signal score.
 
 | Rank | Opportunity | Evidence | Confidence |
 | --- | --- | --- | --- |
-| 1 | Scout brand: Napapijri | At multiple competitors but absent from client assortment | medium |
-| 2 | Category gap: accessories | Present at competitors, under-represented in client catalog | medium |
-| 3 | Material watch: merino | Surfaces across social and publication signals | medium |
-| 4 | Colour direction: olive | Gaining visibility in trend facets | medium |
-| 5 | Feature trend: waterproof | Technical feature across competitor products; evaluate supplier options | low |
+| 1 | Gorpcore Technical-Casual Crossover Product Line | Gorpcore aesthetic facets; Napapijri crossover products at competitors | high |
+| 2 | Napapijri Brand Onboarding for DACH Outdoor Retail | Brand in competitor gap list; technical-casual SKUs at rivals | high |
+| 3 | Merino Wool Ultralight Travel and Hiking Apparel | Ultralight/fastpacking trend facets; merino product signals | high |
+| 4 | Earth Tone Color Palette Expansion in Outdoor Apparel | YouTube earth-tone cluster; olive/sand/stone facets | medium |
+| 5 | Waterproof & Breathable Feature Content Strategy | waterproof/breathable/DWR feature signals; YouTube engagement | medium |
+| 6 | Mindful Outdoor / Wellness Hiking Occasion | Nature-wellness YouTube cluster (directional) | low |
 
 ## Evidence Trail
 
@@ -121,7 +139,7 @@ To audit recommendation **#1** or **#2**:
 - **No strict relevance filter** between YouTube/Trends rows and competitor SKUs — product seeds influence search queries but do not gate results.
 - `commercial_fit` scoring references `archive/data_generation/fake_data.csv` (archived); dimension uses a neutral fallback when file is absent.
 - CSV writes **replace** on each pipeline run (not append).
-- Opportunity **#5** (nature-wellbeing content) is low-confidence and directional — included to show `content_community` opportunity type, not core outdoor product proof.
+- Opportunity **#6** (wellness hiking) is low-confidence and directional — shows `usage_occasion` type, not core product proof.
 
 ## Architecture Notes
 
@@ -132,7 +150,7 @@ Six-step flow orchestrated by [`app/pipeline_runner.py`](app/pipeline_runner.py)
 3. **Facet extraction** — `trend_insights.json` (materials, features, aesthetics)
 4. **Scoring** — cluster signals, six weighted dimensions → `scored_opportunities.csv`
 5. **Compile** — top signals + gaps → `ranked_recommendations.csv`
-6. **UI** — Streamlit presents Trend / Why / Evidence cards
+6. **UI** — Next.js (primary) or Streamlit presents ranked opportunities with evidence cards
 
 See [`docs/PIPELINE.md`](docs/PIPELINE.md) for the full diagram and artifact index.
 
