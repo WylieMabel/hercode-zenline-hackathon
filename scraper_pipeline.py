@@ -123,54 +123,73 @@ CONFIG: dict[str, Any] = {
         },
     },
 
+    # Tested against several outdoor brand/retailer sites (Decathlon,
+    # Patagonia, Arc'teryx, Mountain Equipment Co-op, The North Face) before
+    # picking these three -- the others are JS-rendered or Cloudflare/Akamai
+    # bot-walled and return no usable data to plain requests/BeautifulSoup.
     "retailers": {
         "rei": {
             "url": "https://www.rei.com/c/new-and-popular",
             "market": "US",
+            "parser": "css",
             "item_sel": ".product",
             "title_sel": ".title",
             "brand_sel": ".brand",
             "price_sel": ".price",
-            "fallback_html": """
-                <ul class="products">
-                  <li class="product"><span class="title">Trailmade Trail Running Vest</span>
-                    <span class="brand">REI Co-op</span><span class="price">$59.95</span>
-                    <a href="https://www.rei.com/product/trailmade-trail-running-vest">link</a></li>
-                  <li class="product"><span class="title">Speedgoat 6 Trail Running Shoe</span>
-                    <span class="brand">HOKA</span><span class="price">$155.00</span>
-                    <a href="https://www.rei.com/product/hoka-speedgoat-6">link</a></li>
-                  <li class="product"><span class="title">Fastpack 40 Backpack</span>
-                    <span class="brand">Osprey</span><span class="price">$220.00</span>
-                    <a href="https://www.rei.com/product/osprey-fastpack-40">link</a></li>
-                  <li class="product"><span class="title">Gorpcore Tech Fleece Half-Zip</span>
-                    <span class="brand">Patagonia</span><span class="price">$129.00</span>
-                    <a href="https://www.rei.com/product/patagonia-tech-fleece">link</a></li>
-                </ul>
-            """,
+            "fallback_products": [
+                {"title": "Trailmade Trail Running Vest", "brand": "REI Co-op", "price": "$59.95", "url": "https://www.rei.com/product/trailmade-trail-running-vest"},
+                {"title": "Speedgoat 6 Trail Running Shoe", "brand": "HOKA", "price": "$155.00", "url": "https://www.rei.com/product/hoka-speedgoat-6"},
+                {"title": "Fastpack 40 Backpack", "brand": "Osprey", "price": "$220.00", "url": "https://www.rei.com/product/osprey-fastpack-40"},
+                {"title": "Gorpcore Tech Fleece Half-Zip", "brand": "Patagonia", "price": "$129.00", "url": "https://www.rei.com/product/patagonia-tech-fleece"},
+            ],
         },
         "bergfreunde": {
             "url": "https://www.bergfreunde.de/neuheiten/",
             "market": "DE/CH",
+            "parser": "css",
             "item_sel": ".produkt",
             "title_sel": ".titel",
             "brand_sel": ".marke",
             "price_sel": ".preis",
-            "fallback_html": """
-                <ul class="produkte">
-                  <li class="produkt"><span class="titel">Ultraleicht Laufrucksack 12L</span>
-                    <span class="marke">Salomon</span><span class="preis">79,95 EUR</span>
-                    <a href="https://www.bergfreunde.de/salomon-laufrucksack-12l/">link</a></li>
-                  <li class="produkt"><span class="titel">Fastpacking Zelt 1-Personen</span>
-                    <span class="marke">MSR</span><span class="preis">349,00 EUR</span>
-                    <a href="https://www.bergfreunde.de/msr-fastpacking-zelt/">link</a></li>
-                  <li class="produkt"><span class="titel">Gorpcore Softshelljacke</span>
-                    <span class="marke">Arc'teryx</span><span class="preis">259,00 EUR</span>
-                    <a href="https://www.bergfreunde.de/arcteryx-softshelljacke/">link</a></li>
-                  <li class="produkt"><span class="titel">Trailrunning Schuh Speed</span>
-                    <span class="marke">La Sportiva</span><span class="preis">149,90 EUR</span>
-                    <a href="https://www.bergfreunde.de/la-sportiva-speed/">link</a></li>
-                </ul>
-            """,
+            "fallback_products": [
+                {"title": "Ultraleicht Laufrucksack 12L", "brand": "Salomon", "price": "79,95 EUR", "url": "https://www.bergfreunde.de/salomon-laufrucksack-12l/"},
+                {"title": "Fastpacking Zelt 1-Personen", "brand": "MSR", "price": "349,00 EUR", "url": "https://www.bergfreunde.de/msr-fastpacking-zelt/"},
+                {"title": "Gorpcore Softshelljacke", "brand": "Arc'teryx", "price": "259,00 EUR", "url": "https://www.bergfreunde.de/arcteryx-softshelljacke/"},
+                {"title": "Trailrunning Schuh Speed", "brand": "La Sportiva", "price": "149,90 EUR", "url": "https://www.bergfreunde.de/la-sportiva-speed/"},
+            ],
+        },
+        "columbia": {
+            "url": "https://www.columbia.com/new-arrivals/",
+            "market": "US",
+            "parser": "jsonld",
+            "default_brand": "Columbia",
+            "fallback_products": [
+                {"title": "Women's PFG Freezer Maxi Dress", "brand": "Columbia", "price": "70.00 USD", "url": "https://www.columbia.com/p/womens-pfg-freezer-maxi-dress-2158061.html"},
+                {"title": "Men's PFG Terminal Tackle Hoodie", "brand": "Columbia", "price": "45.00 USD", "url": "https://www.columbia.com/p/mens-pfg-terminal-tackle-hoodie-1536171.html"},
+                {"title": "Women's AmazeStretch Jacket", "brand": "Columbia", "price": "90.00 USD", "url": "https://www.columbia.com/p/womens-amazestretch-jacket-2154741.html"},
+            ],
+        },
+        "black_diamond": {
+            "parser": "shopify_json",
+            "base_url": "https://blackdiamondequipment.com",
+            "market": "US",
+            "collections": ["new-equipment", "new-mens-apparel", "new-womens-apparel"],
+            "fallback_products": [
+                {"title": "Stella-R Headlamp", "brand": "Black Diamond", "price": "54.95", "url": "https://blackdiamondequipment.com/products/stella-r-rechargeable-headlamp"},
+                {"title": "Men's Momentum Climbing Shoes", "brand": "Black Diamond", "price": "129.95", "url": "https://blackdiamondequipment.com/products/mens-momentum-climbing-shoe"},
+                {"title": "Hotforge Hybrid Quickpack 12 cm", "brand": "Black Diamond", "price": "149.95", "url": "https://blackdiamondequipment.com/products/hotforge-hybrid-quickdraw-quickpack-12cm"},
+            ],
+        },
+        "decathlon": {
+            "parser": "shopify_json",
+            "base_url": "https://www.decathlon.com",
+            "market": "US",
+            "collections": ["new-arrivals"],
+            "fallback_products": [
+                {"title": "10L Laptop Backpack", "brand": "Decathlon", "price": "39.99", "url": "https://www.decathlon.com/products/10l-laptop-backpack"},
+                {"title": "2 SECONDS EASY Fresh and Black - 3 Person", "brand": "Quechua", "price": "359.00", "url": "https://www.decathlon.com/products/2-seconds-easy-fresh-and-black-3-person"},
+                {"title": "28L Sports Bag with Waterproof Pocket", "brand": "Decathlon", "price": "44.99", "url": "https://www.decathlon.com/products/28l-sports-bag-with-waterproof-pocket"},
+            ],
         },
     },
 }
@@ -541,7 +560,22 @@ def generate_tiktok_mock_signals() -> list[dict]:
 # Module 2: Commercial & Competitor Signals
 # ---------------------------------------------------------------------------
 
-def _parse_retailer_html(html: str, cfg: dict, source: str) -> list[dict]:
+def _make_product_row(source: str, market: str, title: str, brand: str, price: str, url: str) -> dict:
+    return make_row(
+        source=source,
+        market=market,
+        keyword="new arrivals",
+        signal_name=f"New arrival: {title}",
+        signal_type="competitor",
+        product_name=title,
+        brand=brand,
+        price=price,
+        url=url,
+    )
+
+
+def _parse_retailer_css(html: str, cfg: dict, source: str) -> list[dict]:
+    """Parse product cards via site-specific CSS selectors (fragile -- breaks on markup changes)."""
     from bs4 import BeautifulSoup
 
     soup = BeautifulSoup(html, "html.parser")
@@ -555,13 +589,10 @@ def _parse_retailer_html(html: str, cfg: dict, source: str) -> list[dict]:
         title = title_el.get_text(strip=True) if title_el else NA
         if title == NA:
             continue
-        rows.append(make_row(
+        rows.append(_make_product_row(
             source=source,
             market=cfg["market"],
-            keyword="new arrivals",
-            signal_name=f"New arrival: {title}",
-            signal_type="competitor",
-            product_name=title,
+            title=title,
             brand=brand_el.get_text(strip=True) if brand_el else NA,
             price=price_el.get_text(strip=True) if price_el else NA,
             url=link_el["href"] if link_el else NA,
@@ -569,22 +600,134 @@ def _parse_retailer_html(html: str, cfg: dict, source: str) -> list[dict]:
     return rows
 
 
+def _parse_retailer_jsonld(html: str, cfg: dict, source: str) -> list[dict]:
+    """Parse product listings from schema.org ItemList/Product JSON-LD.
+
+    More robust than CSS selectors since it's a standardized SEO format
+    (meant to be machine-read) rather than page-specific markup.
+    """
+    import json
+
+    rows: list[dict] = []
+    scripts = re.findall(
+        r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>', html, re.S
+    )
+    for script in scripts:
+        try:
+            data = json.loads(script)
+        except json.JSONDecodeError:
+            continue
+        if not (isinstance(data, dict) and data.get("@type") == "ItemList"):
+            continue
+        for element in data.get("itemListElement", []):
+            product = element.get("item", {})
+            if product.get("@type") != "Product":
+                continue
+            title = product.get("name")
+            if not title:
+                continue
+            offer = product.get("offers", {})
+            price = offer.get("price")
+            currency = offer.get("priceCurrency", "")
+            rows.append(_make_product_row(
+                source=source,
+                market=cfg["market"],
+                title=title,
+                brand=cfg.get("default_brand", NA),
+                price=f"{price} {currency}".strip() if price else NA,
+                url=product.get("url", NA),
+            ))
+    return rows
+
+
+def _fetch_shopify_products(name: str, cfg: dict) -> list[dict]:
+    """Pull products via Shopify's public storefront JSON API (no auth, no JS).
+
+    Works on any Shopify-backed store -- found by fingerprinting /cart.json,
+    then reading the real collection handle off the site's own nav links.
+    More robust than CSS scraping since it's a stable, documented endpoint.
+    """
+    rows: list[dict] = []
+    for collection in cfg["collections"]:
+        url = f"{cfg['base_url']}/collections/{collection}/products.json?limit=20"
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=REQUEST_TIMEOUT)
+            resp.raise_for_status()
+            products = resp.json().get("products", [])
+            for product in products:
+                title = product.get("title")
+                if not title:
+                    continue
+                variant = (product.get("variants") or [{}])[0]
+                handle = product.get("handle")
+                rows.append(_make_product_row(
+                    source=name,
+                    market=cfg["market"],
+                    title=title,
+                    brand=product.get("vendor", NA),
+                    price=variant.get("price", NA),
+                    url=f"{cfg['base_url']}/products/{handle}" if handle else NA,
+                ))
+            print(f"  [{name}] collection '{collection}': {len(products)} products parsed (live).")
+        except Exception as exc:
+            print(f"  [{name}] collection '{collection}' fetch failed ({exc}); skipping this collection.")
+    return rows
+
+
+RETAILER_PARSERS = {
+    "css": _parse_retailer_css,
+    "jsonld": _parse_retailer_jsonld,
+}
+
+
 def fetch_retailer_signals() -> list[dict]:
     rows: list[dict] = []
     for name, cfg in CONFIG["retailers"].items():
+        if cfg["parser"] == "shopify_json":
+            parsed = _fetch_shopify_products(name, cfg)
+            if parsed:
+                rows.extend(parsed)
+                continue
+            print(f"  [{name}] no products from any collection; using fallback product list.")
+            fallback_rows = [
+                _make_product_row(
+                    source=f"{name}_fallback_mock",
+                    market=cfg["market"],
+                    title=p["title"],
+                    brand=p["brand"],
+                    price=p["price"],
+                    url=p["url"],
+                )
+                for p in cfg["fallback_products"]
+            ]
+            rows.extend(fallback_rows)
+            print(f"  [{name}] fallback produced {len(fallback_rows)} products.")
+            continue
+
+        parse = RETAILER_PARSERS[cfg["parser"]]
         try:
             resp = requests.get(cfg["url"], headers=HEADERS, timeout=REQUEST_TIMEOUT)
             if resp.status_code in (403, 429) or "cloudflare" in resp.text.lower()[:2000]:
                 raise RuntimeError(f"blocked (status={resp.status_code})")
             resp.raise_for_status()
-            parsed = _parse_retailer_html(resp.text, cfg, name)
+            parsed = parse(resp.text, cfg, name)
             if not parsed:
-                raise RuntimeError("no products matched expected selectors")
+                raise RuntimeError("no products matched expected selectors/schema")
             rows.extend(parsed)
             print(f"  [{name}] live scrape succeeded: {len(parsed)} products.")
         except Exception as exc:
-            print(f"  [{name}] live scrape unavailable ({exc}); using static fallback HTML.")
-            fallback_rows = _parse_retailer_html(cfg["fallback_html"], cfg, f"{name}_fallback_mock")
+            print(f"  [{name}] live scrape unavailable ({exc}); using fallback product list.")
+            fallback_rows = [
+                _make_product_row(
+                    source=f"{name}_fallback_mock",
+                    market=cfg["market"],
+                    title=p["title"],
+                    brand=p["brand"],
+                    price=p["price"],
+                    url=p["url"],
+                )
+                for p in cfg["fallback_products"]
+            ]
             rows.extend(fallback_rows)
             print(f"  [{name}] fallback produced {len(fallback_rows)} products.")
     return rows
