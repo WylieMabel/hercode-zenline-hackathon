@@ -17,6 +17,28 @@ const TYPE_LABEL: Record<string, string> = {
   usage_occasion: "Occasion", content_community: "Content",
 };
 
+/** Best-first: confidence → workflow → signal score → pipeline rank */
+const CONF_WEIGHT: Record<string, number> = { high: 3, medium: 2, low: 1 };
+const WF_WEIGHT: Record<string, number> = { launch: 4, buy: 3, test: 2, monitor: 1 };
+
+function sortOpportunities(opps: Opp[]): Opp[] {
+  return [...opps].sort((a, b) => {
+    const ca = CONF_WEIGHT[a.confidence ?? "low"] ?? 0;
+    const cb = CONF_WEIGHT[b.confidence ?? "low"] ?? 0;
+    if (cb !== ca) return cb - ca;
+
+    const wa = WF_WEIGHT[a.recommended_workflow ?? "monitor"] ?? 0;
+    const wb = WF_WEIGHT[b.recommended_workflow ?? "monitor"] ?? 0;
+    if (wb !== wa) return wb - wa;
+
+    const sa = Number(a.signal_score ?? 0);
+    const sb = Number(b.signal_score ?? 0);
+    if (sb !== sa) return sb - sa;
+
+    return Number(a.rank ?? 99) - Number(b.rank ?? 99);
+  });
+}
+
 function Badge({ label, color }: { label: string; color: string }) {
   return <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${color}`}>{label}</span>;
 }
@@ -25,19 +47,21 @@ function Chip({ label, color = "bg-alpine-100 text-alpine-700" }: { label: strin
   return <span className={`inline-block px-2 py-0.5 rounded-full text-xs mr-1 mb-1 ${color}`}>{label}</span>;
 }
 
-function OpportunityCard({ opp, defaultOpen }: { opp: Opp; defaultOpen?: boolean }) {
+function OpportunityCard({ opp, displayRank, defaultOpen }: { opp: Opp; displayRank: number; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   const conf = opp.confidence ?? "low";
   const wf = opp.recommended_workflow ?? "monitor";
   const urls = (opp.evidence_urls ?? "").split(";").map((u) => u.trim()).filter((u) => u && u !== "N/A");
-  const evidence = (opp.evidence ?? "").split(";").map((e) => e.trim()).filter(Boolean);
+  const evidence = (opp.evidence ?? opp.evidence_summary ?? "").split(";").map((e) => e.trim()).filter(Boolean);
+  const description = opp.description ?? opp.evidence_summary ?? "";
+  const action = opp.action ?? opp.recommended_action ?? "";
 
   return (
     <div className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm">
       <div className="flex items-start justify-between gap-2 cursor-pointer" onClick={() => setOpen(!open)}>
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className="text-alpine-700 font-bold text-sm">#{opp.rank}</span>
+            <span className="text-alpine-700 font-bold text-sm">#{displayRank}</span>
             {opp.signal_score && Number(opp.signal_score) > 0 && (
               <span className="text-xs font-mono bg-alpine-100 text-alpine-700 px-1.5 py-0.5 rounded">
                 {Number(opp.signal_score).toFixed(2)}
@@ -57,7 +81,7 @@ function OpportunityCard({ opp, defaultOpen }: { opp: Opp; defaultOpen?: boolean
         <span className="text-gray-400 text-sm mt-1">{open ? "▲" : "▼"}</span>
       </div>
 
-      {opp.description && <p className="text-sm text-gray-700 mt-2">{opp.description}</p>}
+      {description && <p className="text-sm text-gray-700 mt-2 line-clamp-3">{description}</p>}
 
       {open && (
         <div className="mt-3 space-y-3 border-t pt-3">
@@ -77,10 +101,10 @@ function OpportunityCard({ opp, defaultOpen }: { opp: Opp; defaultOpen?: boolean
               </ul>
             </div>
           )}
-          {opp.action && (
+          {action && (
             <div className="bg-alpine-50 border border-alpine-100 rounded-lg p-3">
               <p className="text-xs font-semibold text-alpine-700 uppercase mb-0.5">Recommended action</p>
-              <p className="text-sm text-gray-800">{opp.action ?? opp.recommended_action}</p>
+              <p className="text-sm text-gray-800">{action}</p>
             </div>
           )}
           <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
@@ -158,12 +182,7 @@ export default function Home() {
     load();
   };
 
-  const sorted = [...opps].sort((a, b) => {
-    const sa = Number(a.signal_score ?? 0);
-    const sb = Number(b.signal_score ?? 0);
-    if (sa !== sb) return sb - sa;
-    return Number(a.rank ?? 99) - Number(b.rank ?? 99);
-  });
+  const sorted = sortOpportunities(opps);
   const highConf = sorted.filter((o) => o.confidence === "high").length;
   const actionable = sorted.filter((o) => ["buy", "launch"].includes(o.recommended_workflow ?? "")).length;
 
@@ -173,7 +192,9 @@ export default function Home() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-alpine-700">⛰️ Zenline Opportunity Scout</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Swiss outdoor retail · six-step signal pipeline</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Swiss outdoor retail · ranked by confidence, action, and score
+          </p>
         </div>
         <button
           onClick={runPipeline}
@@ -221,7 +242,9 @@ export default function Home() {
           {error && <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">{error}</div>}
           {!loading && sorted.length === 0 && !error && <p className="text-gray-400 text-sm">No opportunities yet — run the pipeline first.</p>}
           <div className="space-y-3">
-            {sorted.map((opp, i) => <OpportunityCard key={i} opp={opp} defaultOpen={i === 0} />)}
+            {sorted.map((opp, i) => (
+              <OpportunityCard key={`${opp.opportunity}-${i}`} opp={opp} displayRank={i + 1} defaultOpen={i === 0} />
+            ))}
           </div>
         </div>
       )}
@@ -314,7 +337,7 @@ export default function Home() {
                   <tbody>
                     {sorted.map((o, i) => (
                       <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="px-3 py-2 font-bold text-alpine-700">{o.rank}</td>
+                        <td className="px-3 py-2 font-bold text-alpine-700">{i + 1}</td>
                         <td className="px-3 py-2 font-medium max-w-[200px]">{o.opportunity}</td>
                         <td className="px-3 py-2 text-gray-500">{TYPE_LABEL[o.opportunity_type] ?? o.opportunity_type}</td>
                         <td className="px-3 py-2 text-gray-500">{o.first_observed_market ?? "—"}</td>
