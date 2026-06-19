@@ -65,42 +65,133 @@ Competitor assortment gaps (brands/categories at rivals but not client):
 
 {sales_block}
 
-Identify the top 8–10 distinct business opportunities for a Swiss/DACH outdoor retailer.
-Cover MULTIPLE opportunity types — not only products. Include at least:
-  - 1 material or technology opportunity
-  - 1 aesthetic or colour_palette opportunity
-  - 1 product_type OR brand opportunity
-  - 1 feature, merchandising, or price_gap if supported by evidence
+Identify exactly 6 distinct business opportunities for a Swiss/DACH outdoor retailer.
+Cover multiple opportunity types — not only products (material, feature, brand, colour, content).
 
-For EACH return JSON with keys:
-  rank, opportunity, opportunity_type (one of: OPPORTUNITY_TYPES_PLACEHOLDER),
-  description, evidence (list of 2-3 bullets with source names),
-  first_observed_market, evidence_urls (copied EXACTLY from signals — never invent),
+For EACH object use ONLY these keys:
+  opportunity, opportunity_type (one of: OPPORTUNITY_TYPES_PLACEHOLDER),
+  description, evidence (list of exactly 2 short bullets),
+  first_observed_market, evidence_urls (list of 1-3 URLs copied EXACTLY from signals),
   transferability, action, confidence (low|medium|high), risks,
-  products (list), features (list), materials (list), aesthetics (list), color_palettes (list),
-  recommended_workflow (monitor|test|buy|launch),
-  competitor_gap (one sentence if relevant)
+  recommended_workflow (monitor|test|buy|launch), competitor_gap
 
-Return ONLY a valid JSON array. Keep every string value short (under 120 chars).
-Escape double quotes inside strings with backslash. No markdown fences, no commentary.
+Rules:
+- Every string value MUST be under 90 characters.
+- Do NOT use double-quote characters inside string values — use single quotes instead.
+- evidence_urls must be URLs that appear in the signals block above.
+- Return ONLY a valid JSON array of 6 objects. No markdown fences, no commentary.
 """.replace("OPPORTUNITY_TYPES_PLACEHOLDER", ", ".join(OPPORTUNITY_TYPES))
+
+COMPACT_RETRY_PROMPT = """\
+Return exactly 5 retail opportunities as a JSON array for Swiss outdoor retail.
+
+Signals (use these URLs only):
+{signals}
+
+Gaps: {gaps}
+
+Each object: opportunity, opportunity_type, description, evidence (2 strings max 60 chars),
+evidence_urls (1-2 urls from signals), first_observed_market, transferability, action,
+confidence, risks, recommended_workflow, competitor_gap.
+
+All strings under 80 chars. No quotes inside strings. JSON array only, no markdown.
+"""
+
+
+def _strip_markdown_fence(text: str) -> str:
+    text = text.strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+    return text
+
+
+def _fix_json_text(text: str) -> str:
+    text = text.replace("\u201c", '"').replace("\u201d", '"').replace("\u2019", "'")
+    text = re.sub(r",(\s*[\]}])", r"\1", text)
+    return text
+
+
+def _extract_json_objects(text: str) -> list[dict]:
+    """Salvage complete dict objects from a truncated or malformed JSON array."""
+    objects: list[dict] = []
+    i, n = 0, len(text)
+    while i < n:
+        if text[i] != "{":
+            i += 1
+            continue
+        depth = 0
+        in_str = False
+        esc = False
+        start = i
+        closed = False
+        for j in range(i, n):
+            ch = text[j]
+            if in_str:
+                if esc:
+                    esc = False
+                elif ch == "\\":
+                    esc = True
+                elif ch == '"':
+                    in_str = False
+                continue
+            if ch == '"':
+                in_str = True
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    chunk = text[start : j + 1]
+                    try:
+                        obj = json.loads(chunk)
+                        if isinstance(obj, dict) and obj.get("opportunity"):
+                            objects.append(obj)
+                    except json.JSONDecodeError:
+                        try:
+                            obj = json.loads(_fix_json_text(chunk))
+                            if isinstance(obj, dict) and obj.get("opportunity"):
+                                objects.append(obj)
+                        except json.JSONDecodeError:
+                            pass
+                    i = j + 1
+                    closed = True
+                    break
+        if not closed:
+            break
+    return objects
+
+
+def _normalize_opportunity(opp: dict) -> dict:
+    """Coerce LLM field variants into the shape finalize expects."""
+    if isinstance(opp.get("evidence_urls"), str):
+        opp["evidence_urls"] = [u.strip() for u in opp["evidence_urls"].split(";") if u.strip()]
+    if isinstance(opp.get("evidence"), str):
+        opp["evidence"] = [opp["evidence"]]
+    opp.setdefault("action", opp.pop("recommended_action", ""))
+    return opp
 
 
 def _parse_opportunities_json(raw: str) -> list[dict]:
-    """Parse LLM JSON array; raise ValueError if unrecoverable."""
-    text = raw.strip()
-    if text.startswith("```"):
-        text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
-    try:
-        data = json.loads(text)
-        if isinstance(data, list):
-            return data
-    except json.JSONDecodeError:
-        pass
-    match = re.search(r"\[.*\]", text, re.S)
-    if not match:
-        raise ValueError("no JSON array found in LLM response")
-    return json.loads(match.group(0))
+    """Parse LLM JSON array; salvage partial objects when the full array is malformed."""
+    text = _strip_markdown_fence(raw)
+    attempts = [text, _fix_json_text(text)]
+    match = re.search(r"\[.*", text, re.S)
+    if match:
+        attempts.append(_fix_json_text(match.group(0)))
+
+    for candidate in attempts:
+        try:
+            data = json.loads(candidate)
+            if isinstance(data, list) and data:
+                return [_normalize_opportunity(o) for o in data if isinstance(o, dict)]
+        except json.JSONDecodeError:
+            continue
+
+    salvaged = [_normalize_opportunity(o) for o in _extract_json_objects(text)]
+    if salvaged:
+        return salvaged
+
+    raise ValueError("no JSON array found in LLM response")
 
 
 def _attach_signal_scores(opportunities: list[dict], signals: list[dict]) -> None:
@@ -331,6 +422,18 @@ def _rule_based_opportunities(
     return opps or _placeholders()
 
 
+def _llm_compile_opportunities(
+    prompt: str,
+    *,
+    api_key: str,
+    max_tokens: int = 8192,
+) -> list[dict]:
+    raw = messages_create(prompt, api_key=api_key, model=MODEL, max_tokens=max_tokens)
+    if not raw:
+        raise ValueError("empty LLM response")
+    return _parse_opportunities_json(raw)
+
+
 def compile_opportunities(
     signals: list[dict],
     sales_context: str = "",
@@ -379,16 +482,27 @@ def compile_opportunities(
         )
 
     try:
-        raw = messages_create(prompt, api_key=api_key, model=MODEL, max_tokens=4096)
-        if not raw:
-            return fallback
-        opportunities = _parse_opportunities_json(raw)
-        return _finalize_opportunities(opportunities, valid_urls, gap_hints, insights, category_volume, signals=top_signals)
+        opportunities = _llm_compile_opportunities(prompt, api_key=api_key)
+        return _finalize_opportunities(
+            opportunities, valid_urls, gap_hints, insights, category_volume, signals=top_signals
+        )
     except (json.JSONDecodeError, ValueError, TypeError) as exc:
-        print(f"  [compiler] LLM JSON parse failed ({exc}); using rule-based fallback.")
-        for opp in fallback:
-            opp["risks"] = f"LLM output was malformed ({exc}); showing rule-based recommendations."
-        return fallback
+        print(f"  [compiler] LLM JSON parse failed ({exc}); retrying compact prompt...")
+        compact = COMPACT_RETRY_PROMPT.format(
+            signals="\n".join(f"- {s.get('signal_name', '')[:70]} | {s.get('url', '')}" for s in top_signals[:12]),
+            gaps=gap_hints.get("summary", json.dumps(gap_hints)[:200]),
+        )
+        try:
+            opportunities = _llm_compile_opportunities(compact, api_key=api_key, max_tokens=4096)
+            print(f"  [compiler] Compact retry succeeded ({len(opportunities)} opportunities).")
+            return _finalize_opportunities(
+                opportunities, valid_urls, gap_hints, insights, category_volume, signals=top_signals
+            )
+        except (json.JSONDecodeError, ValueError, TypeError) as retry_exc:
+            print(f"  [compiler] Compact retry failed ({retry_exc}); using rule-based fallback.")
+            for opp in fallback:
+                opp["risks"] = f"LLM output was malformed ({exc}); showing rule-based recommendations."
+            return fallback
     except Exception as exc:
         print(f"  [compiler] LLM call failed ({exc}); using rule-based fallback.")
         for opp in fallback:

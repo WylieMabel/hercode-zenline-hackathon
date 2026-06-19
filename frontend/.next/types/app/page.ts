@@ -1,4 +1,4 @@
-// File: /Users/mabelwylie/hercode-zenline-hackathon/frontend/app/page.tsx
+// File: /Users/sarah/GitHub/hercode-zenline-hackathon/frontend/app/page.tsx
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

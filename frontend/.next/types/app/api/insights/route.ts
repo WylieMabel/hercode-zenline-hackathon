@@ -1,4 +1,4 @@
-// File: /Users/mabelwylie/hercode-zenline-hackathon/frontend/app/api/insights/route.ts
+// File: /Users/sarah/GitHub/hercode-zenline-hackathon/frontend/app/api/insights/route.ts
 import * as entry from '../../../../../app/api/insights/route.js'
 import type { NextRequest } from 'next/server.js'
 
