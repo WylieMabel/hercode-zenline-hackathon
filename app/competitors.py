@@ -77,7 +77,21 @@ RETAILER_REGISTRY: dict[str, dict] = {
             {"title": "Women's AmazeStretch Jacket", "brand": "Columbia", "price": "90.00 USD", "url": "https://www.columbia.com/p/womens-amazestretch-jacket-2154741.html"},
         ],
     },
+    "patagonia": {
+        "parser": "shopify_json",
+        "base_url": "https://www.patagonia.com",
+        "market": "US",
+        "collections": ["new-arrivals", "web-specials"],
+        "fallback_products": [
+            {"title": "Nano Puff Jacket", "brand": "Patagonia", "price": "249.00", "url": "https://www.patagonia.com/product/mens-nano-puff-jacket/84212.html"},
+            {"title": "Terravia Pack 18L", "brand": "Patagonia", "price": "129.00", "url": "https://www.patagonia.com/product/terravia-pack-18l/49000.html"},
+            {"title": "Capilene Cool Daily Hoody", "brand": "Patagonia", "price": "45.00", "url": "https://www.patagonia.com/product/capilene-cool-daily-hoody/45215.html"},
+        ],
+    },
 }
+
+# Human labels for UI / docs
+RETAILER_LABELS = {k: k.replace("_", " ").title() for k in RETAILER_REGISTRY}
 
 COMPETITOR_COLUMNS = [
     "source", "market", "keyword", "signal_name", "signal_type",
@@ -85,20 +99,48 @@ COMPETITOR_COLUMNS = [
 ]
 
 
+def list_registry_slugs() -> list[str]:
+    return sorted(RETAILER_REGISTRY.keys())
+
+
+def _match_registry_slug(name: str) -> str | None:
+    key = name.strip().lower().replace(" ", "_").replace("-", "_")
+    if key in RETAILER_REGISTRY:
+        return key
+    for reg_key in RETAILER_REGISTRY:
+        if reg_key in key or key in reg_key:
+            return reg_key
+    return None
+
+
+def normalize_competitor_slugs(names: list[str]) -> tuple[list[str], list[str]]:
+    """Map requested names to registry slugs. Returns (matched, skipped)."""
+    matched: list[str] = []
+    skipped: list[str] = []
+    seen: set[str] = set()
+    for name in names:
+        slug = _match_registry_slug(name)
+        if slug and slug not in seen:
+            matched.append(slug)
+            seen.add(slug)
+        elif not slug:
+            skipped.append(name)
+    return matched, skipped
+
+
 def resolve_competitors(config: dict) -> list[tuple[str, dict, bool]]:
     """Return list of (name, retailer_cfg, is_client)."""
     client = (config.get("client_company") or "").strip().lower()
-    names = config.get("competitors") or list(RETAILER_REGISTRY.keys())
+    requested = config.get("competitors") or list(RETAILER_REGISTRY.keys())
+    matched, skipped = normalize_competitor_slugs(requested)
+    config["competitors_requested"] = requested
+    config["competitors_skipped"] = skipped
+    names = matched or list(RETAILER_REGISTRY.keys())[:5]
+    config["competitors"] = names
+    if skipped:
+        print(f"  [competitors] skipped unregistered retailers: {', '.join(skipped)}")
     resolved: list[tuple[str, dict, bool]] = []
-    for name in names:
-        key = name.strip().lower().replace(" ", "_")
-        if key not in RETAILER_REGISTRY:
-            for reg_key in RETAILER_REGISTRY:
-                if reg_key in key or key in reg_key:
-                    key = reg_key
-                    break
-            else:
-                continue
+    for key in names:
         cfg = RETAILER_REGISTRY[key]
         is_client = bool(client and (client in key or client in cfg.get("base_url", "")))
         if cfg.get("is_client_default") and client and "decathlon" in client:

@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from geo import resolve_region
+from vertical_presets import apply_vertical_preset, match_vertical
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_PATH = os.path.join(PROJECT_ROOT, "pipeline_config.json")
@@ -98,7 +99,7 @@ def base_config(
         hi = f"CHF {price_max}" if price_max else "any"
         price_range = f"{lo} – {hi}"
 
-    return {
+    config = {
         "location": location,
         "market": market,
         "client_company": client_company or "",
@@ -109,18 +110,22 @@ def base_config(
         "currency": region["currency"],
         "compare_markets": ["CH", "US", "JP"],
         "markets": ["CH", "DACH", "US", "DE", "JP"],
-        "keywords": ["gorpcore", "trail running packs", "fastpacking", "ultralight hiking"],
+        "keywords": [],
         "product_seeds": [],
-        "hashtags": ["#gorpcore", "#trailrunning", "#fastpacking"],
-        "subreddits": ["ultralight", "climbing", "trailrunning"],
+        "hashtags": [],
+        "subreddits": [],
         "youtube_queries": [],
-        "aesthetic_lexicon": ["gorpcore", "alpine minimal", "earth tones", "technical casual"],
-        "materials_watchlist": ["merino", "pertex", "dyneema", "recycled nylon", "gore-tex"],
-        "features_watchlist": ["PFAS-free DWR", "modular vest", "ultralight pack", "approach shoe"],
+        "aesthetic_lexicon": [],
+        "materials_watchlist": [],
+        "features_watchlist": [],
+        "color_palettes_watchlist": [],
+        "opportunity_types_focus": [],
         "signal_types": ["social", "search", "competitor", "weather", "api"],
         "regional_signals_enabled": ["weather", "uv_aqi", "holidays", "daylight", "fx", "publications"],
         "publication_feeds": {},
         "competitors": [],
+        "competitors_requested": [],
+        "competitors_skipped": [],
         "scraper_preset": OUTDOOR_SCRAPER_PRESET,
         "time_windows": default_time_windows(time_horizon),
         "time_horizon": time_horizon,
@@ -129,6 +134,8 @@ def base_config(
         "persist_history": False,
         "summary": f"Scanning {market} signals for {location}" + (f" (client: {client_company})" if client_company else ""),
     }
+    apply_vertical_preset(config)
+    return config
 
 
 def save_config(config: dict, path: str = CONFIG_PATH) -> str:

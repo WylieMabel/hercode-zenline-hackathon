@@ -7,13 +7,15 @@ from __future__ import annotations
 import csv
 import json
 import os
+import re
 import sys
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "")
-MODEL = "claude-sonnet-4-6"
+from llm_client import MODEL, messages_create, resolve_api_key
+
 MAX_SIGNALS = 20
 
 FAKE_DATA_PATH = os.path.join(PROJECT_ROOT, "data_generation", "fake_data.csv")
@@ -21,12 +23,18 @@ SCORED_SIGNALS_PATH = os.path.join(PROJECT_ROOT, "scored_opportunities.csv")
 RECOMMENDATIONS_PATH = os.path.join(PROJECT_ROOT, "ranked_recommendations.csv")
 
 RECOMMENDATION_COLUMNS = [
-    "rank", "opportunity", "first_observed_market", "evidence_summary",
+    "rank", "opportunity", "opportunity_type", "first_observed_market", "evidence_summary",
     "evidence_urls", "transferability", "coverage_status",
     "recommended_action", "confidence", "risks",
     "products", "features", "materials", "aesthetics", "color_palettes",
     "recommended_workflow", "competitor_gap",
 ]
+
+# From docs/challenge.md — opportunities are not only products
+OPPORTUNITY_TYPES = (
+    "product_type", "material", "feature", "aesthetic", "color_palette",
+    "brand", "price_gap", "merchandising", "usage_occasion", "content_community",
+)
 
 CATEGORY_KEYWORDS = {
     "Hiking Footwear": ["hiking boot", "hiking shoe", "approach shoe"],
@@ -43,14 +51,6 @@ CATEGORY_KEYWORDS = {
     "Bike & MTB": ["bike", "mtb", "cycling"],
 }
 
-_client = None
-if CLAUDE_API_KEY:
-    try:
-        import anthropic
-        _client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
-    except ImportError:
-        pass
-
 COMPILE_PROMPT = """\
 You are a retail intelligence analyst for a Swiss outdoor retailer (DACH market).
 
@@ -65,16 +65,63 @@ Competitor assortment gaps (brands/categories at rivals but not client):
 
 {sales_block}
 
-Identify the top 3–5 distinct business opportunities. For EACH return JSON with keys:
-  rank, opportunity, description, evidence (list of 2-3 bullets with source names),
+Identify the top 4–5 distinct business opportunities for a Swiss/DACH outdoor retailer.
+Cover MULTIPLE opportunity types — not only products. Include at least:
+  - 1 material or technology opportunity
+  - 1 aesthetic or colour_palette opportunity
+  - 1 product_type OR brand opportunity
+  - 1 feature, merchandising, or price_gap if supported by evidence
+
+For EACH return JSON with keys:
+  rank, opportunity, opportunity_type (one of: OPPORTUNITY_TYPES_PLACEHOLDER),
+  description, evidence (list of 2-3 bullets with source names),
   first_observed_market, evidence_urls (copied EXACTLY from signals — never invent),
   transferability, action, confidence (low|medium|high), risks,
   products (list), features (list), materials (list), aesthetics (list), color_palettes (list),
-  recommended_workflow (monitor|test|buy|launch — from signal notes workflow= field),
-  competitor_gap (one sentence on assortment gap if relevant)
+  recommended_workflow (monitor|test|buy|launch),
+  competitor_gap (one sentence if relevant)
 
-Return ONLY a valid JSON array, no markdown.
-"""
+Return ONLY a valid JSON array. Keep every string value short (under 120 chars).
+Escape double quotes inside strings with backslash. No markdown fences, no commentary.
+""".replace("OPPORTUNITY_TYPES_PLACEHOLDER", ", ".join(OPPORTUNITY_TYPES))
+
+
+def _parse_opportunities_json(raw: str) -> list[dict]:
+    """Parse LLM JSON array; raise ValueError if unrecoverable."""
+    text = raw.strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+    try:
+        data = json.loads(text)
+        if isinstance(data, list):
+            return data
+    except json.JSONDecodeError:
+        pass
+    match = re.search(r"\[.*\]", text, re.S)
+    if not match:
+        raise ValueError("no JSON array found in LLM response")
+    return json.loads(match.group(0))
+
+
+def _finalize_opportunities(
+    opportunities: list[dict],
+    valid_urls: set[str],
+    gap_hints: dict,
+    insights: dict,
+    category_volume: dict[str, int],
+) -> list[dict]:
+    for opp in opportunities:
+        cited = opp.get("evidence_urls", []) or []
+        opp["evidence_urls"] = [u for u in cited if u in valid_urls]
+        opp.setdefault("first_observed_market", "N/A")
+        opp.setdefault("opportunity_type", "product_type")
+        opp.setdefault("recommended_workflow", "monitor")
+        opp.setdefault("competitor_gap", gap_hints.get("summary", ""))
+        for key in ("products", "features", "materials", "aesthetics", "color_palettes"):
+            opp.setdefault(key, insights.get(key, [])[:3])
+        combined = opp.get("opportunity", "") + " " + opp.get("description", "")
+        opp["coverage_status"] = _compute_coverage_status(combined, category_volume)
+    return opportunities
 
 
 def _aggregate_category_volume(path: str = FAKE_DATA_PATH) -> dict[str, int]:
@@ -114,38 +161,122 @@ def _extract_workflow(notes: str) -> str:
     return "monitor"
 
 
+def _facet_opportunity(
+    rank: int,
+    opportunity_type: str,
+    title: str,
+    description: str,
+    insights: dict,
+    gap_hints: dict,
+    workflow: str = "monitor",
+    confidence: str = "medium",
+    evidence: list[str] | None = None,
+) -> dict:
+    return {
+        "rank": rank,
+        "opportunity": title,
+        "opportunity_type": opportunity_type,
+        "description": description,
+        "evidence": evidence or [description],
+        "first_observed_market": "global",
+        "evidence_urls": [],
+        "transferability": "Assess CH/DACH fit using regional signals and multi-geo search trends.",
+        "action": f"Recommended workflow: {workflow}",
+        "confidence": confidence,
+        "risks": "Derived from trend facet extraction; corroborate with live competitor data.",
+        "products": insights.get("products", [])[:2],
+        "features": insights.get("features", [])[:3] if opportunity_type == "feature" else insights.get("features", [])[:1],
+        "materials": insights.get("materials", [])[:3] if opportunity_type == "material" else insights.get("materials", [])[:1],
+        "aesthetics": insights.get("aesthetics", [])[:3] if opportunity_type == "aesthetic" else insights.get("aesthetics", [])[:1],
+        "color_palettes": insights.get("color_palettes", [])[:3] if opportunity_type == "color_palette" else insights.get("color_palettes", [])[:1],
+        "recommended_workflow": workflow,
+        "competitor_gap": gap_hints.get("summary", ""),
+        "coverage_status": "unknown",
+    }
+
+
 def _rule_based_opportunities(
     signals: list[dict],
     insights: dict,
     gap_hints: dict,
 ) -> list[dict]:
-    """Deterministic fallback when no API key."""
-    top = sorted(signals, key=lambda x: float(x.get("signal_score", 0)), reverse=True)[:5]
-    opps = []
+    """Diverse deterministic recommendations — products, materials, colours, brands, features."""
+    opps: list[dict] = []
+    rank = 1
     gap_summary = gap_hints.get("summary", "No gap analysis available.")
-    for i, s in enumerate(top[:3], 1):
+    top_signals = sorted(signals, key=lambda x: float(x.get("signal_score", 0)), reverse=True)
+
+    if top_signals:
+        s = top_signals[0]
         workflow = _extract_workflow(s.get("notes", ""))
+        name = s.get("signal_name", "Opportunity")
+        if len(name) > 80:
+            name = name[:77] + "..."
         opps.append({
-            "rank": i,
-            "opportunity": s.get("signal_name", "Opportunity")[:60],
-            "description": f"Signal from {s.get('source')} in market {s.get('market')} (score {s.get('signal_score')}).",
+            "rank": rank,
+            "opportunity": name,
+            "opportunity_type": "product_type",
+            "description": (
+                f"Top product signal from {s.get('source')} ({s.get('market')}), "
+                f"score {s.get('signal_score')}."
+            ),
             "evidence": [f"{s.get('source')}: {s.get('signal_name')}"],
             "first_observed_market": s.get("market", "N/A"),
             "evidence_urls": [s.get("url")] if s.get("url") and s.get("url") != "N/A" else [],
-            "transferability": "Assess CH/DACH fit based on market tag and regional signals.",
+            "transferability": "Cross-check US/JP trend velocity vs CH before ranging.",
             "action": f"Recommended workflow: {workflow}",
             "confidence": s.get("confidence", "low"),
-            "risks": "Rule-based compilation without LLM — verify evidence manually.",
+            "risks": "Compiled from scored signals (rule-based fallback).",
             "products": insights.get("products", [])[:3],
-            "features": insights.get("features", [])[:3],
-            "materials": insights.get("materials", [])[:3],
-            "aesthetics": insights.get("aesthetics", [])[:3],
-            "color_palettes": insights.get("color_palettes", [])[:3],
+            "features": insights.get("features", [])[:2],
+            "materials": insights.get("materials", [])[:2],
+            "aesthetics": insights.get("aesthetics", [])[:2],
+            "color_palettes": insights.get("color_palettes", [])[:2],
             "recommended_workflow": workflow,
             "competitor_gap": gap_summary,
             "coverage_status": "unknown",
         })
-    return opps or _placeholders()
+        rank += 1
+
+    for mat in insights.get("materials", [])[:1]:
+        opps.append(_facet_opportunity(
+            rank, "material", f"Material watch: {mat}",
+            f"'{mat}' appears across social and publication signals — monitor for niche-to-mainstream shift.",
+            insights, gap_hints, workflow="monitor", confidence="medium",
+            evidence=[f"Trend facet: material '{mat}'"],
+        ))
+        rank += 1
+
+    palettes = insights.get("color_palettes") or insights.get("aesthetics", [])
+    if palettes:
+        p = palettes[0]
+        opps.append(_facet_opportunity(
+            rank, "color_palette", f"Colour direction: {p}",
+            f"Palette/aesthetic '{p}' gaining visibility — consider merchandising and buy aligned to this vibe.",
+            insights, gap_hints, workflow="test", confidence="medium",
+            evidence=[f"Trend facet: colour/aesthetic '{p}'"],
+        ))
+        rank += 1
+
+    for brand in gap_hints.get("gap_brands", [])[:1]:
+        opps.append(_facet_opportunity(
+            rank, "brand", f"Scout brand: {brand.title()}",
+            f"Brand '{brand}' listed at multiple competitors but absent from client scrape.",
+            insights, gap_hints, workflow="test", confidence="medium",
+            evidence=[f"Competitor gap: brand '{brand}'"],
+        ))
+        rank += 1
+
+    for feat in insights.get("features", [])[:1]:
+        opps.append(_facet_opportunity(
+            rank, "feature", f"Feature trend: {feat}",
+            f"Technical/feature signal '{feat}' — evaluate supplier options and margin impact.",
+            insights, gap_hints, workflow="monitor", confidence="low",
+            evidence=[f"Trend facet: feature '{feat}'"],
+        ))
+        rank += 1
+
+    return opps[:5] or _placeholders()
 
 
 def compile_opportunities(
@@ -153,6 +284,7 @@ def compile_opportunities(
     sales_context: str = "",
     insights: dict | None = None,
     gap_hints: dict | None = None,
+    api_key: str | None = None,
 ) -> list[dict]:
     insights = insights or {}
     gap_hints = gap_hints or {}
@@ -175,7 +307,7 @@ def compile_opportunities(
     gaps = json.dumps(gap_hints, indent=2)
     sales_block = f"Customer data:\n{sales_context}" if sales_context else ""
 
-    if not _client:
+    if not resolve_api_key(api_key):
         opps = _rule_based_opportunities(top_signals, insights, gap_hints)
         category_volume = _aggregate_category_volume()
         for opp in opps:
@@ -186,59 +318,44 @@ def compile_opportunities(
         return opps
 
     prompt = COMPILE_PROMPT.format(signals=signal_lines, facets=facets, gaps=gaps, sales_block=sales_block)
-    try:
-        response = _client.messages.create(
-            model=MODEL,
-            max_tokens=3072,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        raw = response.content[0].text.strip()
-        if raw.startswith("```"):
-            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
-        opportunities = json.loads(raw)
-    except Exception as exc:
-        return [{
-            "rank": 1,
-            "opportunity": "Compilation error",
-            "description": str(exc),
-            "evidence": [],
-            "first_observed_market": "N/A",
-            "evidence_urls": [],
-            "transferability": "",
-            "coverage_status": "unknown",
-            "action": "Check CLAUDE_API_KEY and retry.",
-            "confidence": "low",
-            "risks": "LLM compilation failed.",
-            "recommended_workflow": "monitor",
-            "competitor_gap": "",
-        }]
-
     category_volume = _aggregate_category_volume()
-    for opp in opportunities:
-        cited = opp.get("evidence_urls", []) or []
-        opp["evidence_urls"] = [u for u in cited if u in valid_urls]
-        opp.setdefault("first_observed_market", "N/A")
-        opp.setdefault("recommended_workflow", "monitor")
-        opp.setdefault("competitor_gap", gap_hints.get("summary", ""))
-        for key in ("products", "features", "materials", "aesthetics", "color_palettes"):
-            opp.setdefault(key, insights.get(key, [])[:3])
-        combined = opp.get("opportunity", "") + " " + opp.get("description", "")
-        opp["coverage_status"] = _compute_coverage_status(combined, category_volume)
+    fallback = _rule_based_opportunities(top_signals, insights, gap_hints)
+    for opp in fallback:
+        opp["coverage_status"] = _compute_coverage_status(
+            opp.get("opportunity", "") + " " + opp.get("description", ""),
+            category_volume,
+        )
 
-    return opportunities
+    try:
+        raw = messages_create(prompt, api_key=api_key, model=MODEL, max_tokens=4096)
+        if not raw:
+            return fallback
+        opportunities = _parse_opportunities_json(raw)
+        return _finalize_opportunities(opportunities, valid_urls, gap_hints, insights, category_volume)
+    except (json.JSONDecodeError, ValueError, TypeError) as exc:
+        print(f"  [compiler] LLM JSON parse failed ({exc}); using rule-based fallback.")
+        for opp in fallback:
+            opp["risks"] = f"LLM output was malformed ({exc}); showing rule-based recommendations."
+        return fallback
+    except Exception as exc:
+        print(f"  [compiler] LLM call failed ({exc}); using rule-based fallback.")
+        for opp in fallback:
+            opp["risks"] = f"LLM compilation failed ({exc}); showing rule-based recommendations."
+        return fallback
 
 
 def _placeholders() -> list[dict]:
     return [{
         "rank": 1,
-        "opportunity": "Pipeline complete — set CLAUDE_API_KEY for richer compilation",
-        "description": "Signals scored successfully. Rule-based or LLM compilation available.",
+        "opportunity": "Pipeline complete — enter API key in sidebar for richer compilation",
+        "opportunity_type": "product_type",
+        "description": "Signals scored successfully. Provide your Claude API key in the sidebar for LLM compilation.",
         "evidence": ["See scored_opportunities.csv"],
         "first_observed_market": "N/A",
         "evidence_urls": [],
         "transferability": "N/A",
         "coverage_status": "unknown",
-        "action": "Export CLAUDE_API_KEY and rerun.",
+        "action": "Enter your Claude API key in the sidebar (session only, not saved to disk).",
         "confidence": "low",
         "risks": "No LLM key configured.",
         "recommended_workflow": "monitor",
@@ -254,6 +371,7 @@ def write_recommendations_csv(opportunities: list[dict], path: str = RECOMMENDAT
         rows.append({
             "rank": opp.get("rank", ""),
             "opportunity": opp.get("opportunity", ""),
+            "opportunity_type": opp.get("opportunity_type", "product_type"),
             "first_observed_market": opp.get("first_observed_market", "N/A"),
             "evidence_summary": opp.get("description", "") + (f" Evidence: {evidence_bullets}" if evidence_bullets else ""),
             "evidence_urls": "; ".join(opp.get("evidence_urls", []) or []),
@@ -281,7 +399,8 @@ def load_recommendations(path: str = RECOMMENDATIONS_PATH) -> list[dict]:
     if not os.path.exists(path):
         return []
     with open(path, newline="", encoding="utf-8") as f:
-        return list(csv.DictReader(f))
+        rows = list(csv.DictReader(f))
+    return [r for r in rows if r.get("opportunity") != "Compilation error"]
 
 
 if __name__ == "__main__":

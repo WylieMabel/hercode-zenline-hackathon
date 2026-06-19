@@ -30,6 +30,7 @@ Use any format that fits your solution. Structured CSV or JSON is recommended so
 | --- | --- |
 | `rank` | Recommendation rank. |
 | `opportunity` | The recommended opportunity. |
+| `opportunity_type` | Category of opportunity: `product_type`, `material`, `feature`, `aesthetic`, `color_palette`, `brand`, `price_gap`, `merchandising`, `usage_occasion`, or `content_community`. |
 | `first_observed_market` | Where the signal appears first or strongest. |
 | `evidence_summary` | Concise summary of supporting evidence. |
 | `evidence_urls` | List of source URLs. |

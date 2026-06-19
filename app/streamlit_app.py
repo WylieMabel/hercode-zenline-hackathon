@@ -13,12 +13,10 @@ _PROJECT_ROOT = os.path.dirname(_APP_DIR)
 sys.path.insert(0, _APP_DIR)
 sys.path.insert(0, _PROJECT_ROOT)
 
-import pandas as pd
 import streamlit as st
 
 import pipeline_runner
 from compiler import load_recommendations
-from chatbot.shared import claude_client
 
 st.set_page_config(
     page_title="Zenline Opportunity Scout",
@@ -30,67 +28,40 @@ _DEFAULTS = {
     "pipeline_complete": False,
     "config": {},
     "opportunities": [],
-    "sales_summary": "",
-    "sales_df": None,
-    "messages": [],
     "gap_hints": {},
     "insights": {},
+    "claude_api_key": "",
 }
 for _k, _v in _DEFAULTS.items():
     if _k not in st.session_state:
         st.session_state[_k] = _v
 
-# Load persisted recommendations on startup
 if not st.session_state.opportunities:
     persisted = load_recommendations()
     if persisted:
         st.session_state.opportunities = persisted
 
 
-def summarise_sales(df: pd.DataFrame) -> str:
-    lines = []
-    if "Product Category" in df.columns and "Total Purchase Amount" in df.columns:
-        top = (
-            df.groupby("Product Category")["Total Purchase Amount"]
-            .sum().sort_values(ascending=False).head(3).index.tolist()
-        )
-        lines.append(f"Top revenue categories: {', '.join(top)}")
-    if "Churn" in df.columns:
-        lines.append(f"Overall churn rate: {df['Churn'].mean():.1%}")
-    if "Returns" in df.columns:
-        lines.append(f"Overall return rate: {df['Returns'].mean():.1%}")
-    if "Total Purchase Amount" in df.columns:
-        lines.append(f"Average transaction value: CHF {df['Total Purchase Amount'].mean():.2f}")
-    return "\n".join(lines)
-
-
-def build_agent_system_prompt() -> str:
-    opps = st.session_state.opportunities
-    opp_block = ""
-    if opps:
-        for o in opps[:5]:
-            opp_block += (
-                f"\n{o.get('rank', '?')}. {o.get('opportunity', '')}\n"
-                f"   {o.get('description', o.get('evidence_summary', ''))}\n"
-                f"   Workflow: {o.get('recommended_workflow', '')} | Action: {o.get('action', o.get('recommended_action', ''))}\n"
-            )
-    sales = st.session_state.sales_summary
-    return f"""\
-You are an assortment planning agent for a Swiss outdoor retailer (DACH market).
-{"Ranked opportunities:" + opp_block if opp_block else "No opportunities loaded."}
-{"Customer data:" + chr(10) + sales if sales else ""}
-Be specific and commercially grounded. Flag weak evidence.
-"""
-
-
 CONFIDENCE_BADGE = {"high": "🟢 High", "medium": "🟡 Medium", "low": "🔴 Low"}
 WORKFLOW_BADGE = {"launch": "🚀 Launch", "buy": "🛒 Buy", "test": "🧪 Test", "monitor": "👀 Monitor"}
+TYPE_LABELS = {
+    "product_type": "Product",
+    "material": "Material",
+    "feature": "Feature",
+    "aesthetic": "Aesthetic",
+    "color_palette": "Colour",
+    "brand": "Brand",
+    "price_gap": "Price gap",
+    "merchandising": "Merchandising",
+    "usage_occasion": "Occasion",
+    "content_community": "Content",
+}
 
 
 st.title("⛰️ Zenline Opportunity Scout")
 st.caption("Six-step pipeline: competitors → trends → regional → scoring → recommendations")
 
-tab_pipeline, tab_opps, tab_agent = st.tabs(["▶ Pipeline", "📊 Opportunities", "💬 Assortment Agent"])
+tab_pipeline, tab_opps = st.tabs(["▶ Pipeline", "📊 Opportunities"])
 
 with tab_pipeline:
     col_form, col_steps = st.columns([1, 1], gap="large")
@@ -117,16 +88,23 @@ with tab_pipeline:
                 help="fast=3mo trends; standard=+12mo seasonal; seasonal=+10yr weather baseline",
             )
 
-        st.divider()
-        uploaded = st.file_uploader("Upload company sales CSV (optional)", type=["csv"])
-        if uploaded:
-            try:
-                df = pd.read_csv(uploaded)
-                st.session_state.sales_df = df
-                st.session_state.sales_summary = summarise_sales(df)
-                st.success(f"Loaded {len(df):,} rows")
-            except Exception as exc:
-                st.error(f"Could not parse CSV: {exc}")
+        with st.expander("Claude API key (optional)", expanded=False):
+            st.caption(
+                "Stored only in this browser session — never written to disk, logs, or config files."
+            )
+            api_key_input = st.text_input(
+                "API key",
+                type="password",
+                value=st.session_state.claude_api_key,
+                placeholder="sk-ant-...",
+                label_visibility="collapsed",
+            )
+            if api_key_input:
+                st.session_state.claude_api_key = api_key_input
+            elif st.session_state.claude_api_key:
+                st.success("API key set for this session")
+
+        api_key = st.session_state.claude_api_key or None
 
         run_btn = st.button("▶ Run Pipeline", type="primary", use_container_width=True)
 
@@ -136,12 +114,20 @@ with tab_pipeline:
         if run_btn:
             with st.status("Step 1: Finding competitor products...", expanded=True) as s1:
                 config = pipeline_runner.generate_config(
-                    location, market, client_company, price_min, price_max, time_horizon
+                    location, market, client_company, price_min, price_max, time_horizon,
+                    api_key=api_key,
                 )
                 st.session_state.config = config
                 ok, msg, products, hints = pipeline_runner.run_competitors(config)
                 st.write(msg)
                 st.session_state.gap_hints = hints
+                if config.get("competitors_skipped"):
+                    st.warning(
+                        "Competitors not in registry (skipped): "
+                        + ", ".join(config["competitors_skipped"])
+                    )
+                if config.get("competitors"):
+                    st.caption(f"Scraping: {', '.join(config['competitors'])}")
                 if ok:
                     s1.update(label=f"Step 1: {len(products)} competitor products ✓", state="complete")
                 else:
@@ -156,7 +142,7 @@ with tab_pipeline:
                     s2.update(label="Steps 2–4: Collection error", state="error")
 
             with st.status("Step 2b: Extracting trend facets...", expanded=True) as s2b:
-                ok, msg, insights = pipeline_runner.run_trend_extraction(config)
+                ok, msg, insights = pipeline_runner.run_trend_extraction(config, api_key=api_key)
                 st.write(msg)
                 st.session_state.insights = insights
                 if insights:
@@ -174,7 +160,7 @@ with tab_pipeline:
 
             with st.status("Step 6: Compiling recommendations...", expanded=True) as s4:
                 ok, msg, opps = pipeline_runner.run_compiler(
-                    scored, st.session_state.sales_summary, insights, hints
+                    scored, "", insights, hints, api_key=api_key
                 )
                 st.write(msg)
                 if ok:
@@ -196,18 +182,6 @@ with tab_pipeline:
             st.info("Configure inputs and click **Run Pipeline**.")
 
 with tab_opps:
-    df = st.session_state.sales_df
-    if df is not None:
-        st.subheader("Your Sales Snapshot")
-        m1, m2, m3 = st.columns(3)
-        if "Total Purchase Amount" in df.columns:
-            m1.metric("Avg spend", f"CHF {df['Total Purchase Amount'].mean():.0f}")
-        if "Churn" in df.columns:
-            m2.metric("Churn rate", f"{df['Churn'].mean():.1%}")
-        if "Returns" in df.columns:
-            m3.metric("Return rate", f"{df['Returns'].mean():.1%}")
-        st.divider()
-
     opps = st.session_state.opportunities
     if not opps:
         st.info("No opportunities yet. Run the pipeline on the **Pipeline** tab.")
@@ -218,10 +192,15 @@ with tab_opps:
             name = opp.get("opportunity", "Unknown")
             conf = opp.get("confidence", "low")
             workflow = opp.get("recommended_workflow", "monitor")
+            opp_type = opp.get("opportunity_type", "product_type")
             badge = CONFIDENCE_BADGE.get(conf, conf)
             wf = WORKFLOW_BADGE.get(workflow, workflow)
+            type_label = TYPE_LABELS.get(opp_type, opp_type)
 
-            with st.expander(f"#{rank}  {name}  ·  {badge}  ·  {wf}", expanded=(str(rank) == "1")):
+            with st.expander(
+                f"#{rank}  {name}  ·  {type_label}  ·  {badge}  ·  {wf}",
+                expanded=(str(rank) == "1"),
+            ):
                 left, right = st.columns([2, 1])
                 with left:
                     desc = opp.get("description") or opp.get("evidence_summary", "")
@@ -267,22 +246,3 @@ with tab_opps:
                     action = opp.get("action") or opp.get("recommended_action", "")
                     st.markdown("**Recommended action**")
                     st.info(action)
-
-with tab_agent:
-    st.subheader("Assortment Agent")
-    if not st.session_state.opportunities:
-        st.warning("Run the pipeline first.")
-
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.write(msg["content"])
-
-    if prompt := st.chat_input("Ask about your assortment..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.write(prompt)
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                reply = claude_client.chat(build_agent_system_prompt(), st.session_state.messages[:-1], prompt)
-            st.write(reply)
-        st.session_state.messages.append({"role": "assistant", "content": reply})

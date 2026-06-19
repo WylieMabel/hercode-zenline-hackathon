@@ -12,6 +12,7 @@ __pycache__/
 .ipynb_checkpoints/
 *.log
 cache/
+.streamlit/secrets.toml
 pipeline_config.json
 competitor_gap_hints.json
 trend_insights.json

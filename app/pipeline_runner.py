@@ -16,13 +16,15 @@ import json
 import os
 import sys
 
+from llm_client import MODEL, messages_create, resolve_api_key
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import compiler as _compiler
 import scoring as _scoring
-from competitors import COMPETITOR_PRODUCTS_PATH, GAP_HINTS_PATH, find_competitors
+from competitors import COMPETITOR_PRODUCTS_PATH, GAP_HINTS_PATH, find_competitors, list_registry_slugs, normalize_competitor_slugs
 from geo import resolve_region
 from pipeline_config import (
     CONFIG_PATH,
@@ -32,6 +34,7 @@ from pipeline_config import (
     merge_scraper_keywords,
     save_config,
 )
+from vertical_presets import match_vertical
 from regional import collect_regional_signals
 from signal_collection import collect_social_signals
 from signals_common import dedupe_rows, write_signals_csv
@@ -40,11 +43,8 @@ from trends import collect_trends
 
 RAW_SIGNALS_PATH = os.path.join(PROJECT_ROOT, "raw_signals.csv")
 
-CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "")
-MODEL = "claude-sonnet-4-6"
-
 CONFIG_PROMPT = """\
-You are configuring a retail signal detection pipeline.
+You are configuring a retail signal detection pipeline for vertical: {vertical_label}.
 
 Inputs:
 - Company location: {location}
@@ -52,11 +52,19 @@ Inputs:
 - Client company: {client_company}
 - Price range: {price_range}
 
+Scrapeable competitor slugs (ONLY use ids from this list — others are ignored):
+{available_competitors}
+
 Return JSON with keys:
-  keywords (4-6 search terms), markets (include CH, DACH, US, JP),
-  hashtags (3-5), subreddits (2-4), aesthetic_lexicon (4-6),
-  materials_watchlist (4-6), features_watchlist (4-6),
-  competitors (5-8 retailer slugs e.g. bergfreunde, rei, decathlon),
+  keywords (4-6 search terms for this vertical),
+  markets (include CH, DACH, US, JP),
+  hashtags (3-5), subreddits (2-4),
+  aesthetic_lexicon (4-6 style/vibe terms),
+  materials_watchlist (4-6 materials to monitor),
+  features_watchlist (4-6 product features/technologies),
+  color_palettes_watchlist (3-5 colour directions),
+  competitors (5-8 slugs from the scrapeable list above, prioritise CH/DACH relevance for Swiss outdoor),
+  opportunity_types_focus (pick 4-6 from: product_type, material, feature, aesthetic, color_palette, brand, price_gap, merchandising, usage_occasion, content_community),
   summary (one sentence)
 
 Return ONLY valid JSON, no markdown.
@@ -70,6 +78,7 @@ def generate_config(
     price_min=None,
     price_max=None,
     time_horizon: str = "standard",
+    api_key: str | None = None,
 ) -> dict:
     price_range = "no filter"
     if price_min or price_max:
@@ -80,39 +89,43 @@ def generate_config(
     region = resolve_region(location)
     config = base_config(location, market, client_company, price_min, price_max, time_horizon)
     config["geo_code"] = region["geo"]
-    config["competitors"] = ["bergfreunde", "rei", "black_diamond", "decathlon", "columbia"]
+    vertical_key = match_vertical(market, location)
+    config["vertical_key"] = vertical_key
 
-    if not CLAUDE_API_KEY:
+    if not resolve_api_key(api_key):
         merge_scraper_keywords(config)
         return config
 
     try:
-        import anthropic
-
-        client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
         prompt = CONFIG_PROMPT.format(
+            vertical_label=config.get("vertical_label", vertical_key),
             location=location,
             market=market,
             client_company=client_company or "none",
             price_range=price_range,
+            available_competitors=", ".join(list_registry_slugs()),
         )
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=768,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        raw = response.content[0].text.strip()
+        raw = messages_create(prompt, api_key=api_key, model=MODEL, max_tokens=1024)
+        if not raw:
+            merge_scraper_keywords(config)
+            return config
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
         llm_cfg = json.loads(raw)
         for key in (
             "keywords", "markets", "hashtags", "subreddits", "aesthetic_lexicon",
-            "materials_watchlist", "features_watchlist", "competitors", "summary",
+            "materials_watchlist", "features_watchlist", "color_palettes_watchlist",
+            "opportunity_types_focus", "summary",
         ):
             if key in llm_cfg:
                 config[key] = llm_cfg[key]
-    except Exception:
-        pass
+        if "competitors" in llm_cfg:
+            config["competitors_requested"] = llm_cfg["competitors"]
+            matched, skipped = normalize_competitor_slugs(llm_cfg["competitors"])
+            config["competitors"] = matched or config.get("competitors", [])
+            config["competitors_skipped"] = skipped
+    except Exception as exc:
+        print(f"  [config] LLM config failed ({exc}); using vertical preset defaults.")
 
     merge_scraper_keywords(config)
     return config
@@ -157,12 +170,12 @@ def run_signal_collection(config: dict) -> tuple[bool, str, int]:
         return False, str(exc), 0
 
 
-def run_trend_extraction(config: dict) -> tuple[bool, str, dict]:
+def run_trend_extraction(config: dict, api_key: str | None = None) -> tuple[bool, str, dict]:
     try:
         import csv
         with open(RAW_SIGNALS_PATH, newline="", encoding="utf-8") as f:
             rows = list(csv.DictReader(f))
-        insights = extract_trend_facets(rows, config)
+        insights = extract_trend_facets(rows, config, api_key=api_key)
         return True, f"Extracted {sum(len(insights.get(k, [])) for k in ('trends','products','features'))} facet items", insights
     except Exception as exc:
         return False, str(exc), {}
@@ -188,6 +201,7 @@ def run_compiler(
     sales_context: str = "",
     insights: dict | None = None,
     gap_hints: dict | None = None,
+    api_key: str | None = None,
 ) -> tuple[bool, str, list[dict]]:
     try:
         if gap_hints is None and os.path.exists(GAP_HINTS_PATH):
@@ -195,7 +209,9 @@ def run_compiler(
                 gap_hints = json.load(f)
         if insights is None:
             insights = load_trend_insights()
-        opps = _compiler.compile_opportunities(scored_rows, sales_context, insights, gap_hints)
+        opps = _compiler.compile_opportunities(
+            scored_rows, sales_context, insights, gap_hints, api_key=api_key
+        )
         _compiler.write_recommendations_csv(opps)
         return True, f"Compiled {len(opps)} opportunities → ranked_recommendations.csv", opps
     except Exception as exc:
@@ -210,9 +226,12 @@ def run_pipeline(
     price_max=None,
     sales_context: str = "",
     time_horizon: str = "standard",
+    api_key: str | None = None,
 ) -> dict:
     """Run all six steps; return summary dict."""
-    config = generate_config(location, market, client_company, price_min, price_max, time_horizon)
+    config = generate_config(
+        location, market, client_company, price_min, price_max, time_horizon, api_key=api_key
+    )
     save_config(config)
 
     results: dict = {"config": config, "steps": {}}
@@ -224,14 +243,14 @@ def run_pipeline(
     ok, msg, count = run_signal_collection(config)
     results["steps"]["2_4_signals"] = {"ok": ok, "message": msg, "count": count}
 
-    ok, msg, insights = run_trend_extraction(config)
+    ok, msg, insights = run_trend_extraction(config, api_key=api_key)
     results["steps"]["2_facets"] = {"ok": ok, "message": msg}
     results["insights"] = insights
 
     ok, msg, scored = run_scoring(hints, insights)
     results["steps"]["5_scoring"] = {"ok": ok, "message": msg, "count": len(scored)}
 
-    ok, msg, opps = run_compiler(scored, sales_context, insights, hints)
+    ok, msg, opps = run_compiler(scored, sales_context, insights, hints, api_key=api_key)
     results["steps"]["6_compile"] = {"ok": ok, "message": msg, "count": len(opps)}
     results["opportunities"] = opps
     return results
