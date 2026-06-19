@@ -194,6 +194,42 @@ CONFIG: dict[str, Any] = {
     },
 }
 
+# Hardcoded CONFIGs registered by name. A future query -> CONFIG generator
+# (e.g. "swiss outdoor", "korean skincare") should check this registry FIRST
+# and reuse a matching preset instead of spending API calls to rediscover
+# sources that are already known to work. Today there's only one preset;
+# add more as new verticals get built out, each under its own query string.
+PRESETS: dict[str, dict] = {
+    "swiss outdoor": CONFIG,
+}
+
+
+def resolve_config(query: str | None = None, preset: str | None = None) -> dict:
+    """Pick which CONFIG to run with -- a hardcoded preset (free, instant) or,
+    eventually, a freshly Claude-generated one for an unrecognized query.
+
+    The generation path isn't built yet (see PLANNING.md), so an unrecognized
+    query currently just falls back to the default preset with a clear note,
+    rather than silently pretending to support arbitrary verticals.
+    """
+    if preset:
+        if preset not in PRESETS:
+            raise ValueError(f"Unknown preset '{preset}'. Known presets: {', '.join(PRESETS)}")
+        print(f"  [config] using preset '{preset}' (hardcoded, no API calls).")
+        return PRESETS[preset]
+
+    if query:
+        normalized = query.strip().lower()
+        if normalized in PRESETS:
+            print(f"  [config] query '{query}' matches a hardcoded preset; reusing it (no API calls).")
+            return PRESETS[normalized]
+        print(f"  [config] query '{query}' has no hardcoded preset yet. Dynamic config generation "
+              f"via Claude is planned but not implemented -- falling back to the default "
+              f"'swiss outdoor' preset. Known presets: {', '.join(PRESETS)}.")
+        return PRESETS["swiss outdoor"]
+
+    return PRESETS["swiss outdoor"]
+
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -854,7 +890,10 @@ def write_csv(rows: list[dict], path: str = "raw_signals.csv") -> None:
         writer.writerows(rows)
 
 
-def main() -> None:
+def main(query: str | None = None, preset: str | None = None) -> None:
+    global CONFIG
+    CONFIG = resolve_config(query=query, preset=preset)
+
     all_rows: list[dict] = []
 
     print("=== Module 1: Macro / Cultural Signals ===")
@@ -888,4 +927,18 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    arg_parser = argparse.ArgumentParser(description=__doc__)
+    arg_parser.add_argument(
+        "--query", default=None,
+        help="Natural-language query, e.g. 'swiss outdoor'. Reuses a matching "
+             "hardcoded preset with zero API calls; unrecognized queries fall "
+             "back to the default preset (dynamic generation not yet built).",
+    )
+    arg_parser.add_argument(
+        "--preset", default=None, choices=list(PRESETS.keys()),
+        help="Explicit preset name -- bypasses query matching entirely.",
+    )
+    args = arg_parser.parse_args()
+    main(query=args.query, preset=args.preset)

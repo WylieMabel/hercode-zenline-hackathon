@@ -4,8 +4,8 @@ Complete this file in your fork before submitting.
 
 ## Team
 
-- Team name:
-- Team members:
+- Team name: HerShe(y)
+- Team members: Sarah Verreault, Mabel Wylie
 - GitHub fork URL:
 - Demo URL, if any:
 - Video walkthrough URL, if any:
