@@ -1,16 +1,15 @@
 import os
 
-# To enable real responses: set CLAUDE_API_KEY in your environment and
-# uncomment the anthropic import + swap out the _call_placeholder below.
-#
-# import anthropic
-# _client = anthropic.Anthropic(api_key=os.environ["CLAUDE_API_KEY"])
+import anthropic
 
 CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "")
 MODEL = "claude-sonnet-4-6"
+MAX_TOKENS = 1024
+
+_client = anthropic.Anthropic(api_key=CLAUDE_API_KEY) if CLAUDE_API_KEY else None
 
 
-def chat(system_prompt: str, history: list[dict], user_message: str) -> str:
+def chat(system_prompt: str, history: list[dict], user_message: str, max_tokens: int = MAX_TOKENS) -> str:
     """
     Send a message and return the assistant reply.
 
@@ -19,19 +18,19 @@ def chat(system_prompt: str, history: list[dict], user_message: str) -> str:
     """
     messages = history + [{"role": "user", "content": user_message}]
 
-    if not CLAUDE_API_KEY:
+    if not _client:
         return _call_placeholder(system_prompt, messages)
 
-    # --- Uncomment when ready to use real API ---
-    # response = _client.messages.create(
-    #     model=MODEL,
-    #     max_tokens=1024,
-    #     system=system_prompt,
-    #     messages=messages,
-    # )
-    # return response.content[0].text
-
-    return _call_placeholder(system_prompt, messages)
+    try:
+        response = _client.messages.create(
+            model=MODEL,
+            max_tokens=max_tokens,
+            system=system_prompt,
+            messages=messages,
+        )
+        return response.content[0].text
+    except anthropic.APIError as exc:
+        return f"[CLAUDE API ERROR] {exc}"
 
 
 def _call_placeholder(system_prompt: str, messages: list[dict]) -> str:
