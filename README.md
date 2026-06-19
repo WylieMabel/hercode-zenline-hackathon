@@ -58,6 +58,8 @@ Intro session deck: [`slides/hercode-zenline-hackathon-intro.pptx`](slides/herco
 
 - [`SUBMISSION.md`](SUBMISSION.md): fill this in before submitting your fork.
 - [`docs/challenge.md`](docs/challenge.md): deeper challenge brief and quality bar.
+- [`docs/PIPELINE.md`](docs/PIPELINE.md): end-to-end pipeline summary, steps, and evidence CSV index.
+- [`docs/DEMO.md`](docs/DEMO.md): 3-minute live presentation script.
 - [`docs/data-contract.md`](docs/data-contract.md): suggested structured fields for signals and recommendations.
 - [`docs/evaluation.md`](docs/evaluation.md): judging rubric.
 - [`examples/signals.csv`](examples/signals.csv): minimal example signal-row shape.
