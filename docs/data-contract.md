@@ -18,7 +18,7 @@ Use any format that fits your solution. Structured CSV or JSON is recommended so
 | `url` | Evidence URL. |
 | `signal_score` | Your score for signal strength. Define the scale in your submission. |
 | `confidence` | `high`, `medium`, `low`, or a documented numeric confidence scale. |
-| `notes` | Short evidence notes and limitations. |
+| `notes` | Short evidence notes and limitations. Include measurement window and geo when applicable (e.g. `window: today 3-m, geo: CH`). |
 | `observed_at` | Date or timestamp when the signal was observed. |
 | `artifact_type` | `csv`, `json`, `markdown`, `pdf`, `dashboard`, `screenshot`, `api`, or another explicit type. |
 | `artifact_uri` | Path or URL to the generated artifact. |
@@ -30,6 +30,7 @@ Use any format that fits your solution. Structured CSV or JSON is recommended so
 | --- | --- |
 | `rank` | Recommendation rank. |
 | `opportunity` | The recommended opportunity. |
+| `opportunity_type` | Category of opportunity: `product_type`, `material`, `feature`, `aesthetic`, `color_palette`, `brand`, `price_gap`, `merchandising`, `usage_occasion`, or `content_community`. |
 | `first_observed_market` | Where the signal appears first or strongest. |
 | `evidence_summary` | Concise summary of supporting evidence. |
 | `evidence_urls` | List of source URLs. |

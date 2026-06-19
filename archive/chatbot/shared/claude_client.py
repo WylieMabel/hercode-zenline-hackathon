@@ -1,43 +1,61 @@
 import os
+import sys
 
-import anthropic
+_CHATBOT_SHARED = os.path.dirname(os.path.abspath(__file__))
+_APP_DIR = os.path.abspath(os.path.join(_CHATBOT_SHARED, "..", "..", "app"))
+if _APP_DIR not in sys.path:
+    sys.path.insert(0, _APP_DIR)
 
-CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "")
-MODEL = "claude-sonnet-4-6"
+from llm_client import MODEL, create_client, resolve_api_key
+
 MAX_TOKENS = 1024
 
-_client = anthropic.Anthropic(api_key=CLAUDE_API_KEY) if CLAUDE_API_KEY else None
 
-
-def chat(system_prompt: str, history: list[dict], user_message: str, max_tokens: int = MAX_TOKENS) -> str:
+def chat(
+    system_prompt: str,
+    history: list[dict],
+    user_message: str,
+    max_tokens: int = MAX_TOKENS,
+    api_key: str | None = None,
+) -> str:
     """
     Send a message and return the assistant reply.
 
-    history is a list of {"role": "user"|"assistant", "content": str} dicts
-    representing the conversation so far (not including user_message).
+    Pass api_key from the UI session — it is not stored on disk or in env.
     """
     messages = history + [{"role": "user", "content": user_message}]
+    client = create_client(api_key)
 
-    if not _client:
-        return _call_placeholder(system_prompt, messages)
+    if not client:
+        return _call_placeholder(system_prompt, messages, api_key)
 
     try:
-        response = _client.messages.create(
+        import anthropic
+
+        response = client.messages.create(
             model=MODEL,
             max_tokens=max_tokens,
             system=system_prompt,
             messages=messages,
         )
         return response.content[0].text
-    except anthropic.APIError as exc:
+    except anthropic.APIError as exc:  # type: ignore[union-attr]
         return f"[CLAUDE API ERROR] {exc}"
 
 
-def _call_placeholder(system_prompt: str, messages: list[dict]) -> str:
+def _call_placeholder(system_prompt: str, messages: list[dict], api_key: str | None) -> str:
     last = messages[-1]["content"] if messages else ""
+    if not resolve_api_key(api_key):
+        hint = "Enter your Claude API key in the sidebar (stored only for this session)."
+    else:
+        try:
+            import anthropic  # noqa: F401
+            hint = "API key provided but client could not be created."
+        except ImportError:
+            hint = "Install anthropic: pip install anthropic"
     return (
         f"[PLACEHOLDER RESPONSE]\n"
         f"System prompt length: {len(system_prompt)} chars\n"
         f"Turn {len(messages)} | Last user message: \"{last[:80]}\"\n"
-        f"Set CLAUDE_API_KEY to enable real responses."
+        f"{hint}"
     )
